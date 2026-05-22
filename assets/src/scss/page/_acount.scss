@@ -1,0 +1,370 @@
+.ht-acount-page {
+           padding-block: var(--section-spacing);
+
+           .account-layout-wrapper {
+                      align-items: stretch;
+           }
+
+           .acount-sidebar {
+                      background-color: #FDFBF8;
+                      padding: 40px 30px;
+                      display: flex;
+                      flex-direction: column;
+                      border-radius: 4px;
+
+                      .sidebar-inner {
+                                 display: flex;
+                                 flex-direction: column;
+                                 height: 100%;
+                      }
+
+                      .sidebar-header {
+                                 text-align: center;
+                                 margin-bottom: 40px;
+
+                                 .brand-subtitle {
+                                            font-size: 11px;
+                                            text-transform: uppercase;
+                                            letter-spacing: 0.2em;
+                                            color: var(--clr-primary-400, #A38048);
+                                            margin-bottom: 8px;
+                                 }
+
+                                 .brand-title {
+                                            font-family: var(--font-heading, "Cormorant Garamond", serif);
+                                            font-size: 28px;
+                                            color: #000;
+                                            margin: 0;
+                                 }
+
+                                 .gold-line {
+                                            width: 40px;
+                                            height: 1px;
+                                            background-color: var(--clr-primary-400, #A38048);
+                                            border: none;
+                                            margin: 15px auto 0;
+                                 }
+                      }
+
+                      .woocommerce-MyAccount-navigation {
+                                 float: none !important;
+                                 width: 100%;
+                                 margin-bottom: 40px;
+                                 flex-grow: 1;
+
+                                 ul {
+                                            list-style: none;
+                                            padding: 0;
+                                            margin: 0;
+
+                                            li {
+                                                       margin-bottom: 10px;
+
+                                                       a {
+                                                                  display: flex;
+                                                                  align-items: center;
+                                                                  color: #333;
+                                                                  font-size: 15px;
+                                                                  text-decoration: none;
+                                                                  padding: 10px 0;
+                                                                  transition: all 0.3s ease;
+                                                                  border-bottom: 1px solid transparent;
+
+                                                                  .nav-icon {
+                                                                             display: inline-flex;
+                                                                             align-items: center;
+                                                                             justify-content: center;
+                                                                             width: 20px;
+                                                                             height: 20px;
+                                                                             margin-right: 12px;
+                                                                             opacity: 0.7;
+                                                                             transition: opacity 0.3s ease;
+
+                                                                             svg {
+                                                                                        width: 100%;
+                                                                                        height: 100%;
+                                                                             }
+                                                                  }
+
+                                                                  .nav-text {
+                                                                             flex: 1;
+                                                                  }
+
+                                                                  &:hover {
+                                                                             color: var(--clr-primary-400, #A38048);
+                                                                  }
+                                                       }
+
+                                                       &.is-active a {
+                                                                  color: var(--clr-primary-400, #A38048);
+                                                                  font-weight: 500;
+
+                                                                  .nav-icon {
+                                                                             opacity: 1;
+                                                                  }
+                                                       }
+                                            }
+                                 }
+                      }
+
+                      .sidebar-footer {
+                                 margin-top: auto;
+
+                                 .btn-premium {
+                                            display: block;
+                                            width: 100%;
+                                            background-color: var(--clr-primary-400, #C5A059);
+                                            color: #fff;
+                                            text-align: center;
+                                            padding: 14px 20px;
+                                            text-transform: uppercase;
+                                            font-size: 13px;
+                                            font-weight: 500;
+                                            letter-spacing: 0.1em;
+                                            border-radius: 4px;
+                                            margin-bottom: 24px;
+                                            transition: background 0.3s ease, transform 0.3s ease;
+
+                                            &:hover {
+                                                       background-color: #A38048;
+                                            }
+                                 }
+
+                                 .footer-links {
+                                            display: flex;
+                                            justify-content: center;
+                                            gap: 20px;
+                                            font-size: 12px;
+
+                                            a {
+                                                       color: #888;
+                                                       text-decoration: none;
+                                                       transition: color 0.3s ease;
+
+                                                       &:hover {
+                                                                  color: var(--clr-primary-400, #A38048);
+                                                       }
+                                            }
+                                 }
+                      }
+           }
+
+           .woocommerce-MyAccount-content {
+                      float: none !important;
+                      width: 100%;
+                      padding-top: 10px;
+
+                      @media (min-width: 1024px) {
+                                 padding-left: 20px;
+                      }
+
+                      /* Global WooCommerce Dashboard overrides for premium feel */
+                      h2,
+                      h3 {
+                                 font-family: var(--font-heading, "Cormorant Garamond", serif);
+                                 font-weight: 500;
+                                 color: #000;
+                                 margin-bottom: 20px;
+                      }
+
+                      p {
+                                 color: #555;
+                                 line-height: 1.6;
+                                 margin-bottom: 12px;
+                      }
+
+                      a {
+                                 color: var(--clr-primary-400, #A38048);
+                                 text-decoration: none;
+
+                                 &:hover {
+                                            text-decoration: underline;
+                                 }
+                      }
+
+                      mark {
+                                 background: transparent;
+                                 color: #000;
+                                 font-weight: 500;
+                      }
+
+                      .woocommerce-button {
+                                 padding: 10px 20px !important;
+                                 background-color: transparent !important;
+                                 border: 1px solid var(--clr-primary-400, #A38048) !important;
+                                 color: var(--clr-primary-400, #A38048) !important;
+                                 border-radius: 4px;
+                                 text-transform: uppercase;
+                                 font-size: 12px;
+                                 letter-spacing: 1px;
+                                 transition: all 0.3s ease;
+
+                                 &:hover {
+                                            background-color: var(--clr-primary-400, #A38048) !important;
+                                            color: #fff !important;
+                                 }
+                      }
+
+                      table.woocommerce-orders-table,
+                      table.woocommerce-MyAccount-downloads {
+                                 border: 1px solid #EAEAEA;
+                                 border-radius: 4px;
+                                 overflow: hidden;
+
+                                 th {
+                                            background-color: #FDFBF8;
+                                            color: #333;
+                                            font-size: 13px;
+                                            text-transform: uppercase;
+                                            letter-spacing: 1px;
+                                            padding: 15px !important;
+                                            border-bottom: 1px solid #EAEAEA;
+                                 }
+
+                                 td {
+                                            padding: 15px !important;
+                                            border-bottom: 1px solid #EAEAEA;
+                                            vertical-align: middle;
+                                 }
+
+                                 tr:last-child td {
+                                            border-bottom: none;
+                                 }
+                      }
+
+                      .woocommerce-Address {
+                                 border: 1px solid #EAEAEA;
+                                 padding: 25px;
+                                 border-radius: 4px;
+                                 margin-bottom: 30px;
+
+                                 .woocommerce-Address-title {
+                                            display: flex;
+                                            justify-content: space-between;
+                                            align-items: center;
+                                            margin-bottom: 15px;
+
+                                            h3 {
+                                                       margin: 0;
+                                                       font-size: 20px;
+                                            }
+
+                                            a {
+                                                       font-size: 12px;
+                                                       text-transform: uppercase;
+                                                       letter-spacing: 1px;
+                                            }
+                                 }
+
+                                 address {
+                                            font-style: normal;
+                                            color: #555;
+                                            line-height: 1.8;
+                                 }
+                      }
+
+                      fieldset {
+                                 border: none;
+                                 padding: 0;
+                                 margin: 0 0 30px 0;
+
+                                 legend {
+                                            font-family: var(--font-heading);
+                                            font-size: 24px;
+                                            margin-bottom: 20px;
+                                            color: #000;
+                                 }
+                      }
+
+                      .woocommerce-EditAccountForm {
+                                 max-width: 800px;
+
+                                 .woocommerce-form-row {
+                                            margin-bottom: 20px;
+
+                                            label {
+                                                       display: block;
+                                                       font-size: 13px;
+                                                       color: #555;
+                                                       margin-bottom: 8px;
+                                                       text-transform: uppercase;
+                                                       letter-spacing: 0.5px;
+                                            }
+
+                                            input.input-text,
+                                            select,
+                                            textarea {
+                                                       width: 100%;
+                                                       padding: 12px 15px;
+                                                       border: 1px solid #EAEAEA;
+                                                       border-radius: 4px;
+                                                       background-color: transparent;
+                                                       color: #333;
+                                                       transition: border-color 0.3s ease;
+
+                                                       &:focus {
+                                                                  outline: none;
+                                                                  border-color: var(--clr-primary-400, #A38048);
+                                                       }
+                                            }
+                                 }
+                      }
+           }
+
+           #account_display_name_description {
+                      font-size: var(--fs-300);
+                      margin-top: 4px;
+           }
+}
+
+.woocommerce-message,
+.woocommerce-info,
+.woocommerce-error,
+.woocommerce-noreviews,
+p.no-comments {
+           background-color: var(--clr-primary-100, #FDFBF8) !important;
+           border-top: 3px solid var(--clr-primary-400, #A38048) !important;
+           color: #000000 !important;
+           padding: 15px 20px 15px 50px !important;
+           border-radius: 4px;
+           margin-bottom: 30px !important;
+}
+
+.woocommerce-message::before,
+.woocommerce-info::before {
+           color: var(--clr-primary-400, #A38048) !important;
+           top: 50% !important;
+           transform: translateY(-50%);
+           margin-top: 0 !important;
+}
+
+.ht-login-page {
+           padding-block: var(--section-spacing);
+
+           .u-column1 h2,
+           .u-column2 h2 {
+                      font-size: var(--fs-440);
+                      color: #000;
+                      margin: 0;
+                      margin-bottom: 1rem;
+                      font-weight: 600;
+           }
+
+           .woocommerce-form-login,
+           .woocommerce-form-register {
+                      margin-top: 0 !important;
+           }
+
+           .woocommerce-privacy-policy-text {
+                      margin-bottom: 10px;
+
+                      p {
+                                 font-size: var(--fs-300);
+                      }
+           }
+
+}
+
+.forget-password {
+           padding-block: var(--section-spacing);
+}

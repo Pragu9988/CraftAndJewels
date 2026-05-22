@@ -1,0 +1,20 @@
+@use "../base/typography" as *;
+.kl-tagline {
+    font-family: $font-display;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    list-style-type: disc;
+    color: #fff;
+    font-size: var(--fs-410);
+    margin-bottom: 1em;
+}
+
+.kl-tagline.secondary {
+    margin-bottom: 1em;
+    font-family: $font-display;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    list-style-type: disc;
+    color: var(--clr-secondary-400);
+    font-size: var(--fs-410);
+}

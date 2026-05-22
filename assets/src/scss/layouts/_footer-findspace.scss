@@ -1,0 +1,463 @@
+// Floating Widget Styles
+@use "../abstracts" as *;
+// Variables based on screenshots (approximations)
+$floating-bg: #FBF6EF;
+$floating-text: #222222;
+$floating-accent: #C79E45; // Gold/Yellow from button
+$floating-border: #E8E5DF;
+$floating-overlay: rgba(0, 0, 0, 0.6);
+
+.ht-floating-widget-wrapper {
+           position: relative;
+           z-index: 9999;
+}
+
+// ------------------------------------
+// 1. Floating Button (Bottom Right)
+// ------------------------------------
+.ht-floating-btn {
+           position: fixed;
+           bottom: 30px;
+           right: 20px;
+           background-color: $floating-accent;
+           color: #333; // dark text on gold button
+           border: none;
+           border-radius: 50px;
+           padding: 12px 24px;
+           font-family: inherit;
+           font-size: 16px;
+           font-weight: 600;
+           display: flex;
+           align-items: center;
+           gap: 8px;
+           cursor: pointer;
+           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+           transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+           // Continuous subtle bounce animation
+           animation: floatingBounce 4s infinite ease-in-out;
+
+           @include mq("lg") {
+                      bottom: 100px;
+           }
+
+           &:hover {
+                      transform: translateY(-2px);
+                      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+                      animation: none; // stop bounce on hover
+           }
+
+           &__icon {
+                      font-size: 18px;
+                      line-height: 1;
+           }
+}
+
+@keyframes floatingBounce {
+
+           0%,
+           80%,
+           100% {
+                      transform: translateY(0);
+           }
+
+           85% {
+                      transform: translateY(-15px);
+           }
+
+           90% {
+                      transform: translateY(0);
+           }
+
+           95% {
+                      transform: translateY(-7px);
+           }
+}
+
+
+// ------------------------------------
+// 2. Modal Popup
+// ------------------------------------
+.ht-floating-modal {
+           position: fixed;
+           top: 0;
+           left: 0;
+           width: 100%;
+           height: 100%;
+           display: flex;
+           align-items: center;
+           justify-content: center;
+           opacity: 0;
+           visibility: hidden;
+           transition: opacity 0.3s ease, visibility 0.3s ease;
+           z-index: 10000;
+
+           &.is-open {
+                      opacity: 1;
+                      visibility: visible;
+
+                      .ht-floating-modal__dialog {
+                                 transform: translateY(0) scale(1);
+                                 opacity: 1;
+                      }
+           }
+
+           &__overlay {
+                      position: absolute;
+                      top: 0;
+                      left: 0;
+                      width: 100%;
+                      height: 100%;
+                      background-color: $floating-overlay;
+                      backdrop-filter: blur(2px);
+                      cursor: pointer;
+           }
+
+           &__dialog {
+                      position: relative;
+                      width: 90%;
+                      max-width: 700px;
+                      background-color: $floating-bg;
+                      border-radius: 4px;
+                      padding: 40px 30px;
+                      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+                      transform: translateY(20px) scale(0.98);
+                      opacity: 0;
+                      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+                      max-height: 90vh;
+                      overflow-y: auto;
+
+                      // Custom scrollbar styling
+                      scrollbar-width: thin;
+                      scrollbar-color: var(--clr-primary-400) transparent;
+
+                      &::-webkit-scrollbar {
+                                 width: 3px;
+                      }
+
+                      &::-webkit-scrollbar-track {
+                                 background: transparent;
+                      }
+
+                      &::-webkit-scrollbar-thumb {
+                                 background-color: $floating-accent;
+                                 border-radius: 10px;
+                      }
+           }
+
+           &__close {
+                      position: absolute;
+                      top: 5px;
+                      right: 15px;
+                      background: transparent;
+                      border: none;
+                      color: #777;
+                      cursor: pointer;
+                      padding: 5px;
+                      transition: color 0.2s;
+
+                      &:hover {
+                                 color: #000;
+                      }
+           }
+
+           &__header {
+                      margin-bottom: 25px;
+                      position: relative;
+           }
+
+           &__progress {
+                      width: 100%;
+                      height: 3px;
+                      background-color: $floating-border;
+                      margin-bottom: 20px;
+                      border-radius: 2px;
+                      overflow: hidden;
+           }
+
+           &__progress-bar {
+                      height: 100%;
+                      background-color: $floating-accent;
+                      width: 33.33%;
+                      transition: width 0.4s ease;
+           }
+
+           &__step-text {
+                      font-family: inherit;
+                      font-size: 14px;
+                      font-style: italic;
+                      color: $floating-accent;
+                      margin-bottom: 10px;
+           }
+
+           &__title {
+                      font-size: var(--fs-450);
+                      font-weight: 700;
+                      color: $floating-text;
+                      margin: 0;
+                      line-height: 1.2;
+           }
+
+           &__back {
+                      background: none;
+                      border: none;
+                      color: #666;
+                      cursor: pointer;
+                      display: flex;
+                      align-items: center;
+                      gap: 5px;
+                      position: absolute;
+                      top: 0;
+                      right: 0;
+                      font-size: 14px;
+                      padding: 5px 0;
+                      margin-top: 15px;
+
+                      &:hover {
+                                 color: #000;
+                      }
+           }
+
+           &__body {
+                      position: relative;
+           }
+}
+
+// ------------------------------------
+// 3. Step Containers & Lists
+// ------------------------------------
+.ht-floating-step {
+           display: none;
+           animation: fadeIn 0.4s ease;
+
+           &.is-active {
+                      display: block;
+           }
+}
+
+@keyframes fadeIn {
+           from {
+                      opacity: 0;
+                      transform: translateY(10px);
+           }
+
+           to {
+                      opacity: 1;
+                      transform: translateY(0);
+           }
+}
+
+.ht-floating-list {
+           display: flex;
+           flex-direction: column;
+           gap: 15px;
+}
+
+.ht-floating-list-item {
+           display: flex;
+           justify-content: space-between;
+           align-items: center;
+           width: 100%;
+           padding: 20px 25px;
+           background-color: transparent;
+           border: 1px solid $floating-border;
+           border-radius: 4px;
+           cursor: pointer;
+           text-align: left;
+           transition: all 0.2s ease;
+           font-family: 'Inter', sans-serif;
+           color: $floating-text;
+
+           &__text {
+                      font-size: var(--fs-400);
+                      font-weight: 500;
+           }
+
+           svg {
+                      color: #999;
+                      transition: transform 0.2s ease;
+           }
+
+           &:hover {
+                      background-color: #fff;
+                      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+                      border-color: #ddd;
+
+                      svg {
+                                 transform: translateX(3px);
+                                 color: $floating-accent;
+                      }
+           }
+}
+
+
+// ------------------------------------
+// 4. Products Grid & Cards
+// ------------------------------------
+.ht-floating-grid {
+           display: flex;
+           flex-direction: column;
+           gap: 15px;
+           margin-bottom: 25px;
+}
+
+.ht-floating-product {
+           display: flex;
+           align-items: stretch;
+           background-color: transparent;
+           border: 1px solid $floating-border;
+           border-radius: 4px;
+           text-decoration: none;
+           color: inherit;
+           transition: all 0.2s ease;
+           overflow: hidden;
+           padding: 15px;
+           gap: 20px;
+
+           &:hover {
+                      background-color: #fff;
+                      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+           }
+
+           &__img {
+                      width: 80px;
+                      height: 80px;
+                      flex-shrink: 0;
+                      background-color: #eee;
+                      border-radius: 4px;
+                      overflow: hidden;
+
+                      img {
+                                 width: 100%;
+                                 height: 100%;
+                                 object-fit: cover;
+                      }
+           }
+
+           &__info {
+                      display: flex;
+                      flex-direction: column;
+                      justify-content: center;
+                      flex-grow: 1;
+           }
+
+           &__title {
+                      font-family: 'Playfair Display', serif;
+                      font-size: 18px;
+                      font-weight: 700;
+                      margin: 0 0 4px;
+                      color: $floating-text;
+           }
+
+           &__meta {
+                      font-family: 'Inter', sans-serif;
+                      font-size: 13px;
+                      color: #777;
+                      margin-bottom: 8px;
+           }
+
+           &__price {
+                      font-family: 'Inter', sans-serif;
+                      font-size: var(--fs-300);
+                      font-weight: 600;
+                      color: $floating-text;
+
+                      del {
+                                 color: #999;
+                                 font-weight: 400;
+                                 font-size: 13px;
+                                 margin-right: 5px;
+                                 background-color: unset;
+                      }
+
+                      ins {
+                                 text-decoration: none;
+                                 color: $floating-text;
+                                 background-color: unset;
+                      }
+           }
+}
+
+.ht-floating-actions {
+           text-align: center;
+}
+
+.ht-floating-btn--outline {
+           background: transparent;
+           border: 1px solid $floating-border;
+           color: #666;
+           display: inline-block;
+           padding: 14px 30px;
+           width: 100%;
+           margin-top: 10px;
+           font-weight: 500;
+
+           // Reset fixed positioning for inline button
+           position: static;
+           border-radius: 4px;
+           box-shadow: none;
+
+           &:hover {
+                      background-color: #f5f5f5;
+                      color: #000;
+                      transform: translateY(0);
+                      box-shadow: none;
+           }
+}
+
+// ------------------------------------
+// 5. Utilities
+// ------------------------------------
+.ht-floating-loader {
+           text-align: center;
+           padding: 40px 0;
+           color: #888;
+           font-style: italic;
+}
+
+.ht-floating-no-results {
+           text-align: center;
+           color: #666;
+           padding: 30px 0;
+}
+
+.ht-floating-text-btn {
+           background: none;
+           border: none;
+           color: $floating-accent;
+           text-decoration: underline;
+           cursor: pointer;
+           margin-top: 10px;
+           font-size: inherit;
+           font-family: inherit;
+
+           &:hover {
+                      color: darken($floating-accent, 10%);
+           }
+}
+
+// Media Queries
+@media (max-width: 576px) {
+           .ht-floating-btn {
+                      bottom: 20px;
+                      right: 20px;
+                      padding: 10px 20px;
+                      font-size: 15px;
+           }
+
+           .ht-floating-modal__dialog {
+                      width: 100%;
+                      height: 100%;
+                      max-height: 100vh;
+                      max-width: none;
+                      border-radius: 0;
+                      padding: 40px 20px 20px;
+                      display: flex;
+                      flex-direction: column;
+           }
+
+           .ht-floating-modal__body {
+                      flex-grow: 1;
+                      overflow-y: auto;
+           }
+}

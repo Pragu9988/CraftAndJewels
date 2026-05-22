@@ -1,0 +1,163 @@
+// $font-family: "Hellix";
+$font-display: "Cormorant Garamond";
+
+* {
+    font-variation-settings: "wght" var(--font-weight, 375), "wdth" var(--font-width, 80);
+}
+
+body {
+    font-size: var(--fs-350);
+    // font-family: $font-family, sans-serif;
+    font-family: "Inter", sans-serif;
+    color: hsl(var(--clr-neutral-800));
+    letter-spacing: 0.5px;
+    // overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+h4 {
+    --font-weight: 500;
+    --font-width: 80;
+    font-weight: var(--font-weight);
+    font-stretch: 100%;
+    line-height: 1.1;
+    color: hsl(var(--clr-neutral-900));
+    font-family: "Playfair Display", serif;
+}
+
+h1 {
+    --font-weight: 500;
+    // color: var(--clr, var(--clr-primary-400));
+}
+
+// .title {
+//     font-size: clamp(var(--fs-600), calc(1rem + 5vw), 5rem);
+// }
+.article-snippet-title {
+    --font-weight: 600;
+}
+
+time+p {
+    font-size: 1.25em;
+    margin: 2em 0 1em !important;
+}
+
+// This is setting the font-sizes
+// based on the ones in the abstract
+// folder, go there to make updates
+h1,
+.h1 {
+    font-size: var(--fs-800);
+}
+
+h2,
+.h2 {
+    --flow-spacer: 1.5em;
+    font-size: var(--fs-700);
+}
+
+h3,
+.h3 {
+    --flow-spacer: 1.5em;
+    font-size: var(--fs-500);
+}
+
+h4,
+.h4 {
+    font-size: var(--fs-450);
+}
+
+small,
+.text-small {
+    font-size: var(--fs-300);
+}
+
+strong {
+    --font-weight: 600;
+    font-weight: var(--font-weight);
+}
+
+a {
+    color: #191919;
+
+    &:hover,
+    &:focus {
+        color: var(--clr-secondary-500);
+        text-decoration: none;
+    }
+}
+
+p:not([class]),
+ul:not([class]),
+li:not([class]) {
+    // max-width: 60ch;
+    line-height: 1.618;
+    color: hsl(var(--clr-neutral-500));
+    font-size: var(--fs-350);
+}
+
+.text-page-title {
+    font-size: clamp(4rem, 5.8462rem + -6.1538vw, 2rem);
+    line-height: 1.2;
+}
+
+.section-title {
+    font-size: var(--fs-520);
+    font-weight: 700 !important;
+    line-height: 1.3em;
+    font-family: var(--font-heading);
+    color: var(--clr-neutral-550);
+
+    &.divider {
+        position: relative;
+
+        &::after {
+            content: "";
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 6rem;
+            height: 3px;
+            background-color: var(--clr-primary-400);
+            border-radius: var(--radius-lg);
+            bottom: -10px;
+        }
+    }
+
+}
+
+.section-sub-title {
+    font-size: var(--fs-500);
+    font-weight: 800;
+    line-height: 1.5em;
+    font-family: var(--font-heading);
+}
+
+.text-post-title {
+    font-size: var(--fs-450);
+    line-height: 1.5em;
+}
+
+.text-card-title {
+    font-size: var(--fs-450);
+    line-height: 1.5em;
+}
+
+.text-subtitle {
+    font-size: var(--fs-450);
+    line-height: 1.5em;
+}
+
+.normal-text {
+    font-size: var(--fs-350);
+    line-height: 1.5em;
+    color: var(--clr-neutral-550);
+}
+
+.text-small-text {
+    font-size: var(--fs-350);
+    line-height: 1.6;
+}

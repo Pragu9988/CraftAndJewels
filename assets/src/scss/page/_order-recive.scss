@@ -1,0 +1,81 @@
+@use "../abstracts/" as *;
+
+.page-content,
+.entry-content,
+.entry-summary {
+           margin: 0 !important;
+}
+
+.ht-thankyou {
+           padding-block: var(--section-spacing);
+
+           .thank-you-title {
+                      font-size: var(--fs-440);
+                      margin-bottom: 12px;
+                      font-weight: 600;
+           }
+
+           .order_details {
+                      list-style: none;
+                      padding: 0;
+                      margin: 0;
+                      border: 1px solid #e5e4e0;
+                      border-radius: var(--radius-lg);
+                      overflow: hidden;
+                      margin-bottom: 1rem !important;
+
+                      @include mq("lg") {
+                                 margin-bottom: 2rem !important;
+                      }
+
+                      li {
+                                 padding: 1rem 1.5rem !important;
+                                 font-size: var(--fs-300) !important;
+                                 border-right: unset !important;
+
+                                 @include mq("lg") {
+                                            border-right: 1px dashed #cfc8d8 !important;
+                                 }
+
+                                 &:last-child {
+                                            border-bottom: none;
+
+                                            @include mq("lg") {
+                                                       border-right: unset !important;
+                                            }
+                                 }
+
+                                 strong {
+                                            margin-top: 8px;
+                                            color: var(--clr-text-500);
+                                            font-weight: 600 !important;
+                                            font-size: var(--fs-350) !important;
+                                 }
+                      }
+           }
+
+           .woocommerce-order p {
+                      font-size: var(--fs-400);
+                      margin-bottom: 10px;
+                      font-weight: 500;
+           }
+
+           .woocommerce-order-details__title,
+           .woocommerce-column__title {
+                      font-size: var(--fs-440);
+                      font-weight: 600;
+                      margin-bottom: 10px;
+           }
+
+           .woocommerce-column--1 {
+                      margin-bottom: 1.5rem;
+
+                      @include mq("lg") {
+                                 margin-bottom: 0rem;
+                      }
+           }
+
+           .woocommerce-customer-details address {
+                      padding: 1rem !important;
+           }
+}

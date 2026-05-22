@@ -1,0 +1,45 @@
+@use "../abstracts/" as *;
+.client-marquee {
+    overflow-x: hidden;
+    &__body {
+        display: flex;
+        flex-wrap: nowrap;
+        white-space: nowrap;
+        min-width: 100%;
+        overflow-x: hidden;
+        gap: 1rem;
+    }
+    &__section {
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        overflow: hidden;
+        gap: 1rem;
+        .logo-block {
+            width: 140px;
+            margin-inline: 2rem;
+        }
+    }
+}
+
+.marquee-hover-pause {
+    &:hover {
+        * {
+            animation-play-state: paused;
+        }
+    }
+}
+
+.oct-clients-marquee {
+    padding-block: 1.5rem;
+    padding-block: var(--section-spacing);
+    &__row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        @include mq("md") {
+            flex-wrap: nowrap;
+        }
+    }
+}

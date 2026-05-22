@@ -1,0 +1,179 @@
+@use "../abstracts" as *;
+
+.entry-title {
+    display: none;
+}
+
+.ht-cart-page {
+    padding-block: var(--section-spacing);
+    font-family: var(--font-secondary);
+
+    .woocommerce-info,
+    .woocommerce-noreviews,
+    p.no-comments {
+        background-color: var(--clr-secondary-100);
+        border-top-color: var(--clr-primary);
+
+        &::before {
+            color: var(--clr-primary-400);
+        }
+    }
+
+    .woocommerce-shipping-destination strong {
+        font-weight: 400 !important;
+        font-size: var(--fs-350);
+    }
+
+    /* Meta text formatting */
+    .product-meta dl.variation {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin: 0;
+        font-size: 13px;
+        color: var(--clr-neutral-500);
+
+        dt,
+        dd {
+            margin: 0;
+            display: inline-block;
+        }
+
+        dt {
+            font-weight: 400;
+            margin-right: 4px;
+        }
+
+        dd {
+            font-weight: 600;
+            color: var(--clr-neutral-550);
+        }
+
+        dd p {
+            margin: 0;
+        }
+    }
+
+    input[type="number"].hide-spinners {
+        -moz-appearance: textfield;
+    }
+
+    input[type="number"].hide-spinners::-webkit-outer-spin-button,
+    input[type="number"].hide-spinners::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .product-remove a.remove {
+        color: var(--clr-neutral-400) !important;
+        font-size: var(--fs-350);
+
+        &:hover {
+            background-color: unset !important;
+        }
+    }
+
+    .cart-title {
+        font-size: var(--fs-420);
+        margin-bottom: 12px;
+        font-weight: 600;
+        color: var(--clr-neutral-550);
+    }
+
+    .product-thumbnail img {
+        border-radius: var(--radius-lg);
+    }
+
+    .product-title {
+        font-size: var(--fs-410);
+        font-weight: 500;
+        color: var(--clr-neutral-550);
+
+        &:hover {
+            color: var(--clr-text-400);
+        }
+    }
+
+    /* Custom layout for totals */
+    .cart_totals {
+        width: 100% !important;
+        float: unset !important;
+
+        h2 {
+            display: none !important;
+        }
+
+        /* Handled by our custom h2 */
+
+        table.shop_table {
+            border: 0;
+            margin: 0;
+            width: 100%;
+            border-collapse: collapse;
+
+            tr {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 10px 0;
+                font-size: var(--fs-350);
+
+                th,
+                td {
+                    border: 0;
+                    padding: 0;
+                    background: transparent;
+                }
+
+                th {
+                    font-weight: 400;
+                    color: var(--clr-neutral-500);
+                    text-align: left;
+                }
+
+                td {
+                    font-weight: 600;
+                    color: var(--clr-neutral-550);
+                    text-align: right;
+
+                    font-size: var(--fs-350);
+                }
+            }
+
+            tr.order-total {
+                border-top: 1px solid var(--clr-neutral-200);
+                margin-top: 8px;
+                padding-top: 16px;
+
+                th {
+                    font-weight: 600;
+                    color: var(--clr-neutral-550);
+                    font-size: var(--fs-410);
+                }
+
+                td {
+                    font-size: var(--fs-400);
+                    font-weight: 400;
+
+                    strong {
+                        font-weight: 400;
+                        --font-weight: 400;
+                    }
+                }
+            }
+
+            .tax-rate td {
+                color: var(--clr-error-400);
+            }
+
+            .cart-discount td {
+                color: var(--clr-success-400);
+            }
+        }
+
+        .wc-proceed-to-checkout {
+            display: none;
+            /* Handled by our custom buttons */
+        }
+    }
+}

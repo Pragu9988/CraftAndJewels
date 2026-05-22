@@ -1,0 +1,77 @@
+@use "../abstracts" as *;
+
+:root {
+    --section-spacing: 2rem;
+
+    @include mq(md) {
+        --section-spacing: 3rem;
+    }
+
+    @include mq(lg) {
+        --section-spacing: 4rem;
+    }
+
+    @each $color,
+    $shade in $colors {
+
+        @each $prop,
+        $value in $shade {
+            --clr-#{$color}-#{$prop}: #{$value};
+        }
+    }
+
+    @each $gutter,
+    $size in $gutters {
+        --gtr-#{$gutter}: #{$size};
+    }
+
+    @each $screen-size,
+    $property in $type-scale {
+        @if $screen-size==xs {
+
+            @each $prop,
+            $value in $property {
+                --fs-#{$prop}: #{$value};
+            }
+        }
+
+        @else {
+            @include mq(md) {
+
+                @each $prop,
+                $value in $property {
+                    --fs-#{$prop}: #{$value};
+                }
+            }
+
+            @include mq(lg) {
+
+                // Adding responsive text for lg breakpoint
+                @each $prop,
+                $value in $property {
+                    --fs-#{$prop}: #{$value};
+                }
+            }
+        }
+    }
+
+    /* Z-index values */
+    --zBase: 1;
+    --zAbove: 3;
+    --zBelow: 0;
+    --zHighest: 1000;
+    --font-display: "Cormorant Garamond";
+    --font-heading: "Playfair Display";
+    --font-secondary: "Inter";
+    --body-font: 'Inter';
+    --accent-color: #F4A261;
+    --text-dark: #1D3557;
+    --text-light: #F1FAEE;
+    --background-light: #FBF6EF;
+    --background-dark: #FBF6EF;
+    --wc-form-color-background: #FBF6EF;
+    --shadow-soft: 0 3px 6px rgba(0, 0, 0, 0.1);
+    --shadow-strong: 0 5px 10px rgba(0, 0, 0, 0.2);
+    --radius-md: 8px;
+    --radius-lg: 12px;
+}

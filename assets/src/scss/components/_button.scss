@@ -1,0 +1,124 @@
+@use "../abstracts/" as *;
+
+.btn,
+.kl-btn {
+    all: unset;
+    display: inline-block;
+    font-weight: 500;
+    font-family: var(--font-display);
+    padding: 0.9em 2em 0.8em;
+    letter-spacing: 0.5px;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 12px;
+    background-color: var(--clr-text-200);
+    color: var(--clr-primary-500);
+    font-size: var(--fs-400) !important;
+
+    &:hover {
+        background-color: var(--clr-secondary-500);
+        color: hsl(var(--clr-neutral-100));
+    }
+
+    a {
+        color: #ffffff !important;
+    }
+
+    &[data-reverse="true"] {
+        background-color: transparent;
+        padding: 0;
+        font-size: var(--fs-400);
+        color: hsl(var(--clr-white-400));
+        text-decoration: underline;
+        text-decoration-color: hsl(var(--clr-neutral-500));
+        text-decoration-thickness: 2px;
+        text-underline-offset: 0.5rem;
+        color: #fff;
+    }
+
+    &__outline {
+        color: var(--clr-secondary-400);
+        border: 1px solid var(--clr-secondary-400);
+        font-size: var(--fs-300);
+        padding: 0.6em 1em 0.5em;
+        background-color: transparent;
+    }
+
+    &__white {
+        color: hsl(var(--clr-neutral-100));
+    }
+
+    &__secondary {
+        color: var(--clr-secondary-400);
+    }
+
+    &__text-lg {
+        font-size: var(--fs-410);
+    }
+
+    &__secondary-bg {
+        background-color: var(--clr-secondary-400);
+    }
+
+    &[data-icon="true"] {
+        display: inline-flex;
+        align-items: center;
+    }
+}
+
+.button {
+    background-color: var(--clr-primary-400) !important;
+    color: var(--clr-text-200) !important;
+    font-weight: 700 !important;
+    padding: 0.7rem 1.5rem !important;
+    border-radius: var(--radius-lg);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: 0.3s ease;
+    letter-spacing: 1px;
+    font-size: 0.7rem;
+    border-radius: var(--radius-lg);
+    font-family: var(--font-heading);
+    width: fit-content;
+
+    @include mq("lg") {
+        font-size: 0.9rem;
+        padding: 1rem 2.5rem;
+    }
+
+    &:hover {
+        background-color: var(--clr-primary-500) !important;
+        transform: translateY(-2px);
+        color: var(--clr-text-200) !important;
+    }
+}
+
+// yaatra  btn
+.visa-form input[type="submit"],
+.btn-primary {
+    display: inline-block;
+    background-color: var(--clr-primary-400);
+    color: var(--clr-text-200) !important;
+    font-weight: 700;
+    padding: 0.7rem 1.5rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: 0.3s ease;
+    letter-spacing: 1px;
+    font-size: 0.7rem;
+    border-radius: var(--radius-lg);
+    font-family: var(--font-heading);
+    width: fit-content;
+
+    @include mq("lg") {
+        font-size: 0.9rem;
+        padding: 1rem 2.5rem;
+    }
+
+    &:hover {
+        background-color: var(--clr-primary-500);
+        transform: translateY(-2px);
+        color: var(--clr-text-200) !important;
+    }
+}

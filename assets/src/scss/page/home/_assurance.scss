@@ -1,0 +1,137 @@
+/* ==========================================================================
+   Heritage Shop by Luxury
+   ========================================================================== */
+@use "../../abstracts" as *;
+
+.ht-assurance {
+
+   // Refined gold-tinted top/bottom border for premium feel
+   border-top: 1px solid rgba(166, 124, 16, 0.2); // --clr-primary-500 at low opacity
+   border-bottom: 1px solid rgba(166, 124, 16, 0.2);
+   padding-top: 1rem;
+   padding-bottom: 1rem;
+   background-color: hsl(30, 30%, 90%);
+
+   &__inner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      width: 100%;
+   }
+
+   .ht-assurance-slider {
+      width: 100%;
+      cursor: grab;
+
+      &:active {
+         cursor: grabbing;
+      }
+
+      .splide__track {
+         overflow: visible; // Allow some overflow if needed, but normally hidden is fine
+      }
+
+      .splide__list {
+         display: flex !important;
+         align-items: center;
+         transition-timing-function: linear !important; // Smooth marquee
+      }
+
+      .splide__slide {
+         width: auto !important;
+         padding-right: 1rem;
+
+         @include mq("md") {
+            padding-right: 1.4rem;
+         }
+
+         @include mq("lg") {
+            padding-right: 1.8rem;
+         }
+      }
+
+      // Explicitly hide arrows and pagination
+      .splide__arrows,
+      .splide__pagination {
+         display: none !important;
+      }
+   }
+
+   // ── Assurance tag pill ───────────────────────────────────────────────────
+   &__tag {
+      // Transparent luxury pill — no background fill, fine border
+      font-size: var(--fs-300);
+      font-weight: 700;
+      letter-spacing: 0.35px;
+      color: rgb(102, 102, 102); // Charcoal #3A3835
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      transition: background-color 0.25s ease, border-color 0.25s ease,
+         box-shadow 0.25s ease, transform 0.2s ease;
+
+      strong {
+         font-weight: 700;
+         color: var(--clr-secondary-500); // same charcoal, bold weight only
+      }
+   }
+
+   // ── Icon inside each tag ─────────────────────────────────────────────────
+   &__icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: var(--clr-primary-400); // Rich gold #A67C10
+      transition: color 0.25s ease;
+      font-weight: 600;
+
+      svg {
+         width: 1.05rem;
+         height: 1.05rem;
+         stroke: currentColor;
+         fill: none;
+
+         @include mq("md") {
+            width: 1.15rem;
+            height: 1.15rem;
+         }
+      }
+   }
+
+   // When tag is hovered, deepen icon colour slightly
+   &__tag:hover &__icon {
+      color: var(--clr-primary-400); // Warm gold #CFA020
+   }
+
+   // ── Title & subtitle (left column) ───────────────────────────────────────
+   &__title {
+      font-family: "Cormorant Garamond", serif;
+      font-size: clamp(2.25rem, 4.5vw, 3.25rem);
+      color: var(--clr-secondary-500); // Charcoal
+      margin-bottom: 0.4rem;
+      font-weight: 500;
+      letter-spacing: -0.25px;
+      line-height: 1.1;
+   }
+
+   &__highlight {
+      color: var(--clr-primary-500); // Rich gold
+      font-weight: 500;
+   }
+
+   &__subtitle {
+      font-family: inherit;
+      color: var(--clr-secondary-400); // Steel #8C8A85
+      font-size: clamp(0.9rem, 1.4vw, 1.1rem);
+      margin: 0;
+      font-weight: 400;
+      letter-spacing: 0.2px;
+   }
+}
+
+/* ==========================================================================
+end assurance
+   ========================================================================== */

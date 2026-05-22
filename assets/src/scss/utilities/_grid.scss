@@ -1,0 +1,87 @@
+@use "../abstracts" as *;
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-left: -$bp-gutter-left;
+  margin-right: -$bp-gutter-right;
+
+  & > * {
+    padding-left: $bp-gutter-left;
+    padding-right: $bp-gutter-right;
+  }
+
+  &.no-gutter > * {
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+  }
+
+  & > [class*="col"] {
+    padding-bottom: 1rem;
+    @include mq(md) {
+      padding-bottom: 0;
+    }
+
+    &.gutter-md {
+      padding-inline: 1em;
+      @include mq(md) {
+        padding-inline: 2em;
+      }
+    }
+  }
+}
+
+@include mq(xs) {
+  @for $i from 1 through $grid-columns {
+    .col-xs-#{$i} {
+      flex: 0 0 calc((100% / $grid-columns) * $i);
+      max-width: calc((100% / $grid-columns) * $i);
+    }
+  }
+}
+
+@include mq(md) {
+  @for $i from 1 through $grid-columns {
+    .col-md-#{$i} {
+      flex: 0 0 calc((100% / $grid-columns) * $i);
+      max-width: calc((100% / $grid-columns) * $i);
+    }
+    .col-md-offset-#{$i} {
+      margin-left: calc((100% / $grid-columns) * $i);
+    }
+  }
+}
+
+@include mq(lg) {
+  @for $i from 1 through $grid-columns {
+    .col-lg-#{$i} {
+      flex: 0 0 calc((100% / $grid-columns) * $i);
+      max-width: calc((100% / $grid-columns) * $i);
+    }
+    .col-lg-offset-#{$i} {
+      margin-left: calc((100% / $grid-columns) * $i);
+    }
+  }
+}
+
+@include mq(xl) {
+  @for $i from 1 through $grid-columns {
+    .col-xl-#{$i} {
+      flex: 0 0 calc((100% / $grid-columns) * $i);
+      max-width: calc((100% / $grid-columns) * $i);
+    }
+    .col-xl-offset-#{$i} {
+      margin-left: calc((100% / $grid-columns) * $i);
+    }
+  }
+}
+
+@include mq("md") {
+  .order-1 {
+    order: 0;
+  }
+
+  .order-2 {
+    order: 1;
+  }
+}

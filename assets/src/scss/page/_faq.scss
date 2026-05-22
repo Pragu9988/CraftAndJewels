@@ -1,0 +1,169 @@
+@use "../abstracts/" as *;
+
+/* =============================================================
+ * Heritage FAQ — Accordion Section
+ * ============================================================= */
+
+.ht-faq {
+    padding-block: var(--section-spacing, 5rem);
+
+    // ── Accordion List ────────────────────────────────────────
+    &__list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        max-width: 900px;
+        margin-inline: auto;
+
+        @include mq("md") {
+            gap: 1.5rem 1.2rem;
+        }
+    }
+
+    // ── Single Item ───────────────────────────────────────────
+    &__item {
+
+        border: 1px solid var(--clr-secondary-200, #e5e4e0);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        transition: border-color 0.25s ease, box-shadow 0.25s ease;
+
+        &:hover {
+            border-color: var(--clr-primary-300, #e8c35a);
+            box-shadow: 0 4px 16px rgba(207, 160, 32, 0.08);
+        }
+
+        &.is-open {
+            border-color: var(--clr-primary-400, #cfa020);
+            box-shadow: 0 6px 24px rgba(207, 160, 32, 0.12);
+        }
+    }
+
+    // ── Question Button (Trigger) ─────────────────────────────
+    &__question {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        width: 100%;
+        padding: 1rem 10px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        text-align: left;
+        outline: none;
+
+        &:focus-visible {
+            outline: 2px solid var(--clr-primary-400, #cfa020);
+            outline-offset: -2px;
+            border-radius: 0.75rem;
+        }
+
+        @include mq("md") {
+            padding: 1rem;
+            gap: 1.25rem;
+        }
+    }
+
+    &__number {
+        flex-shrink: 0;
+        font-size: var(--fs-400, 0.875rem);
+        font-weight: 700;
+        color: var(--clr-primary-500, #cfa020);
+        letter-spacing: 0.04em;
+        min-width: 1.75rem;
+        line-height: 1;
+        min-width: 2rem;
+
+    }
+
+    &__question-text {
+        flex: 1;
+        font-size: var(--fs-410, 1rem);
+        font-family: var(--font-heading);
+        font-weight: 600;
+        color: var(--clr-neutral-700, #000);
+        line-height: 1.45;
+        margin: 0;
+    }
+
+    // ── Icon (+ / −) ──────────────────────────────────────────
+    &__icon {
+        flex-shrink: 0;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 1px solid var(--clr-secondary-200, #e5e4e0);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--clr-neutral-500, #3a3835);
+        transition: border-color 0.25s ease, color 0.25s ease, transform 0.3s ease;
+        position: relative;
+    }
+
+    &__icon-plus,
+    &__icon-minus {
+        position: absolute;
+        transition: opacity 0.2s ease, transform 0.3s ease;
+    }
+
+    &__icon-minus {
+        opacity: 0;
+        transform: scale(0.6);
+    }
+
+    &__icon-plus {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    // Open state — swap icons, style icon circle
+    &__item.is-open &__icon {
+        border-color: var(--clr-primary-400, #cfa020);
+        color: var(--clr-primary-400, #cfa020);
+    }
+
+    &__item.is-open &__icon-plus {
+        opacity: 0;
+        transform: scale(0.6) rotate(45deg);
+    }
+
+    &__item.is-open &__icon-minus {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    // ── Answer Panel ──────────────────────────────────────────
+    &__answer {
+        display: grid;
+        grid-template-rows: 0fr;
+        transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+        &:not([hidden]) {
+            grid-template-rows: 1fr;
+        }
+
+        // Override native hidden so we control via grid animation
+        &[hidden] {
+            display: grid !important;
+            grid-template-rows: 0fr;
+        }
+    }
+
+    &__answer-inner {
+        overflow: hidden;
+
+        p {
+            margin: 0;
+            padding: 0 1.5rem 1.375rem 1.5rem;
+            padding-left: calc(1.5rem + 1rem + 1rem); // align under question text (icon gap)
+
+            @include mq("md") {
+
+                padding: 0 1.75rem 1.5rem 1.75rem;
+                padding-left: calc(1.75rem + 2rem + 1.25rem);
+            }
+
+        }
+    }
+}

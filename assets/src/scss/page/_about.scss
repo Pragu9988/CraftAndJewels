@@ -1,0 +1,256 @@
+@use "../abstracts" as *;
+
+.ht-about-intro {
+           padding-block: var(--section-spacing, 4rem);
+           background-color: var(--clr-primary-100); // Clean, non-card layout background
+
+           &__container {
+                      display: flex;
+                      flex-direction: column;
+                      gap: 2rem; // Wide gap between sections since they are not cards
+
+                      @include mq("lg") {
+                                 gap: 3.5rem;
+                      }
+           }
+
+           &__section {
+                      position: relative;
+           }
+
+           &__top-wrapper,
+           &__bottom-wrapper {
+                      display: grid;
+                      grid-template-columns: 1fr;
+                      gap: 2rem;
+                      align-items: center;
+
+                      @include mq("lg") {
+                                 grid-template-columns: 1fr 1fr;
+                                 gap: 3rem;
+                      }
+           }
+
+           &__breadcrumb {
+                      font-size: var(--fs-300);
+                      color: var(--clr-neutral-400);
+                      margin-bottom: 1.5rem;
+                      font-weight: 600;
+                      display: flex;
+                      align-items: center;
+                      gap: 0.5rem;
+                      text-transform: uppercase;
+                      letter-spacing: 0.5px;
+
+                      i {
+                                 color: var(--clr-neutral-400);
+                                 font-size: 1.1em;
+                      }
+
+                      .current {
+                                 color: var(--clr-primary-400, #bf953d);
+                      }
+           }
+
+           &__title {
+                      font-family: var(--font-heading);
+                      font-size: clamp(var(--fs-650), 4vw, var(--fs-800));
+                      font-weight: 700;
+                      line-height: 1.2;
+                      color: var(--clr-neutral-700);
+                      margin-bottom: 2rem;
+                      letter-spacing: -0.01em;
+
+                      .highlight {
+                                 color: var(--clr-primary-400, #bf953d);
+                      }
+           }
+
+           &__desc-wrapper {
+                      display: flex;
+                      flex-direction: column;
+                      gap: 1.25rem; // Spacing between paragraphs
+           }
+
+           &__desc {
+                      font-size: var(--fs-410);
+                      color: var(--clr-neutral-500);
+                      line-height: 1.7;
+                      margin-bottom: 0;
+           }
+
+           &__top-image,
+           &__bottom-image {
+                      border-radius: var(--radius-lg, 1.5rem);
+                      overflow: hidden;
+
+                      img {
+                                 width: 100%;
+                                 height: 100%;
+                                 object-fit: cover;
+                                 aspect-ratio: 4/3;
+                                 transition: transform 0.5s ease;
+
+                                 &:hover {
+                                            transform: scale(1.03); // Slight zoom effect
+                                 }
+                      }
+           }
+
+           &__features-title {
+                      font-family: var(--font-heading);
+                      font-size: var(--fs-650);
+                      font-weight: 700;
+                      color: var(--clr-neutral-700);
+                      margin-bottom: 2rem;
+           }
+
+           &__features-list {
+                      list-style: none;
+                      padding: 0;
+                      margin: 0;
+                      display: flex;
+                      flex-direction: column;
+                      gap: 1.25rem;
+           }
+
+           &__feature-item {
+                      display: flex;
+                      align-items: center;
+                      gap: 1.25rem;
+                      border-radius: var(--radius-md, 8px);
+                      font-size: var(--fs-420);
+                      font-weight: 500;
+                      color: var(--clr-neutral-600);
+
+                      i {
+                                 color: var(--clr-primary-400, #bf953d);
+                                 font-size: 1.2em;
+                      }
+           }
+}
+
+/* -------------------------------------------------------------
+ * Trust & Quality Promise / Vision Section
+ * ------------------------------------------------------------- */
+.ht-vision-trust {
+           // padding-block: var(--section-spacing, 4rem);
+           background-color: var(--clr-neutral-100, #ffffff);
+           padding-block: var(--section-spacing);
+
+           &__container {
+                      display: flex;
+                      flex-direction: column;
+                      gap: 2rem;
+                      max-width: 1300px;
+                      margin-inline: auto;
+                      padding-inline: 1rem;
+
+                      @include mq("lg") {
+                                 gap: 3rem;
+                      }
+           }
+
+           &__header {
+                      text-align: center;
+                      max-width: 1020px;
+                      margin: 0 auto;
+           }
+
+           &__header-title {
+                      font-family: var(--font-heading);
+                      font-size: clamp(var(--fs-550, 1.875rem), 3vw, var(--fs-650, 2.375rem));
+                      font-weight: 700;
+                      color: var(--clr-neutral-700);
+                      margin-bottom: 1.25rem;
+                      letter-spacing: -0.01em;
+           }
+
+           &__header-desc {
+                      font-size: var(--fs-440, 1.125rem);
+                      color: var(--clr-neutral-500);
+                      line-height: 1.7;
+           }
+
+           &__cards {
+                      display: grid;
+                      grid-template-columns: 1fr;
+                      gap: 2rem;
+
+                      @include mq("md") {
+                                 grid-template-columns: 1fr 1fr;
+                                 gap: 2.5rem;
+                      }
+           }
+
+           &__card {
+                      background-color: var(--background-light, #F8F9FA);
+                      border-radius: var(--radius-lg, 12px);
+                      padding: 3rem 2.5rem;
+                      display: flex;
+                      flex-direction: column;
+                      align-items: center;
+                      text-align: center;
+                      transition: transform 0.3s ease, box-shadow 0.3s ease;
+                      border: 1px solid var(--clr-secondary-100);
+
+                      &:hover {
+                                 transform: translateY(-5px);
+                                 box-shadow: var(--shadow-strong, 0 5px 10px rgba(0, 0, 0, 0.1));
+                                 border-color: var(--clr-primary-300, #c7a348);
+                      }
+           }
+
+           &__icon {
+                      width: 60px;
+                      height: 60px;
+                      border-radius: 50%;
+                      background-color: var(--clr-neutral-100, #ffffff);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      margin-bottom: 1.5rem;
+                      box-shadow: var(--shadow-soft, 0 3px 6px rgba(0, 0, 0, 0.05));
+
+                      svg {
+                                 color: var(--clr-primary-400, #bf953d);
+                                 width: 26px;
+                                 height: 26px;
+                      }
+           }
+
+           &__card-title {
+                      font-family: var(--font-heading);
+                      font-size: var(--fs-510, 1.5rem);
+                      font-weight: 600;
+                      color: var(--clr-neutral-700);
+                      margin-bottom: 2rem;
+                      letter-spacing: 0.02em;
+           }
+
+           &__list {
+                      list-style: none;
+                      padding: 0;
+                      margin: 0;
+                      display: flex;
+                      flex-direction: column;
+                      gap: 1.25rem;
+                      text-align: left;
+                      width: 100%;
+           }
+
+           &__list-item {
+                      font-size: var(--fs-410, 1rem);
+                      color: var(--clr-neutral-500);
+                      display: flex;
+                      align-items: flex-start;
+                      gap: 0.75rem;
+                      line-height: 1.5;
+
+                      svg {
+                                 color: var(--clr-primary-400, #bf953d);
+                                 flex-shrink: 0;
+                                 margin-top: 0.15rem;
+                      }
+           }
+}

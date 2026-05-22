@@ -1,0 +1,10 @@
+@use "../abstracts/" as *;
+
+@each $gutter, $size in $gutters {
+  .gtr-#{$gutter} > * {
+    padding-inline: calc(#{$size} / 2);
+    @include mq(md) {
+      padding-inline: #{$size};
+    }
+  }
+}

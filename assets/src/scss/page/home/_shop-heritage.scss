@@ -1,0 +1,148 @@
+/* ==========================================================================
+   Heritage Section (ht-heritage) - Refined luxury design
+   ========================================================================== */
+@use "../../abstracts" as *;
+
+.ht-heritage {
+   padding-bottom: var(--section-spacing);
+   // padding-top: var(--section-spacing);
+   //   background-color: #f7f7f5a1;
+
+   // ── Section headline ─────────────────────────────────────────────────────
+   &__headline {
+      margin-bottom: 1rem;
+      text-align: center;
+
+      @include mq("md") {
+         margin-bottom: 2rem;
+      }
+
+      @include mq("lg") {
+         margin-bottom: 2.5rem;
+      }
+   }
+
+   // ── Responsive CSS Grid ──────────────────────────────────────────────────
+   &__grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+      max-width: 1200px;
+      margin-inline: auto;
+
+      @include mq("md") {
+         grid-template-columns: repeat(3, minmax(0, 1fr));
+         gap: 1.5rem;
+      }
+
+      @include mq("lg") {
+         grid-template-columns: repeat(5, minmax(0, 1fr));
+         gap: 2rem;
+      }
+   }
+
+   // ── Card ─────────────────────────────────────────────────────────────────
+   &__card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-decoration: none;
+      gap: 1rem;
+      isolation: isolate;
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+
+      &:hover {
+         transform: translateY(-3px);
+
+         .ht-heritage__img-wrapper {
+            border-color: var(--clr-primary-400);
+            box-shadow: 0 15px 35px rgba(166, 124, 16, 0.12);
+         }
+
+         .ht-heritage__img {
+            transform: scale(1.1);
+         }
+
+         .ht-heritage__label {
+            color: var(--clr-text-400);
+         }
+      }
+   }
+
+   // ── Image wrapper ────────────────────────────────────────────────────────
+   &__img-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1; // Square for cleaner luxury gallery look
+      border-radius: var(--radius-lg, 12px);
+      overflow: hidden;
+      background-color: var(--clr-secondary-100, #f7f7f5);
+      border: 2px solid #f0edeb;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+
+      &::after {
+         content: '';
+         position: absolute;
+         inset: 0;
+         box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.02);
+         pointer-events: none;
+      }
+   }
+
+   // ── Image ────────────────────────────────────────────────────────────────
+   &__img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+      transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+   }
+
+   // ── No-image fallback ────────────────────────────────────────────────────
+   &__placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      color: var(--clr-secondary-300);
+      text-align: center;
+      padding: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+   }
+
+   // ── Term name label ──────────────────────────────────────────────────────
+   &__label {
+      display: block;
+      width: 100%;
+      text-align: center;
+      font-family: inherit;
+      font-size: var(--fs-350);
+      font-weight: 500;
+      color: var(--clr-neutral-550);
+      letter-spacing: 0.3px;
+      -webkit-transition: color 0.3s ease;
+      transition: color 0.3s ease;
+      line-height: 1.3;
+   }
+
+   // ── Empty state ──────────────────────────────────────────────────────────
+   &__empty {
+      font-family: var(--font-heading);
+      color: var(--clr-secondary-400);
+      font-size: 1.1rem;
+      margin-top: 3rem;
+      font-style: italic;
+   }
+}
+
+/* ==========================================================================
+   Heritage Section end
+   ========================================================================== */

@@ -1,0 +1,61 @@
+@use "../abstracts/" as *;
+.kl-aside-content {
+    margin-top: var(--section-spacing);
+    margin-bottom: calc(var(--section-spacing) / 4);
+    &__sec-title {
+        margin-bottom: 1rem;
+        @include mq("lg") {
+            margin-bottom: 1rem;
+        }
+        .kl-title {
+            font-size: var(--fs-650);
+        }
+    }
+}
+
+.ol-spotlight {
+    &__heading-wrapper {
+      margin-bottom: 3rem;
+      .kl-spotlight__info-box:nth-child(2) {
+        margin-top: 1.5rem;
+      }
+    }
+    &__title {
+      font-size: var(--fs-600);
+      margin-bottom: 2rem;
+    }
+    &__content {
+      max-width: 100ch;
+    }
+    .info {
+      border-top: 1px solid hsl(var(--clr-neutral-300));
+      padding: 10px 0rem;
+    }
+    // &__info-box {
+    //   max-width: 250px;
+    //   margin: auto;
+    //   text-align: center;
+    //   @include mq(md) {
+    //     text-align: left;
+    //   }
+    // }
+    &__box-title {
+      font-size: var(--fs-450);
+      line-height: 1.3em;
+      margin-bottom: 0.75rem;
+      &--small {
+        font-size: 21px;
+      }
+  
+      &--large {
+        font-size: var(--fs-470);
+        margin-bottom: 0;
+        font-weight: 600;
+        color: hsl(var(--clr-primary-500));
+      }
+    }
+    .box-content {
+      font-size: 1rem;
+      color: hsl(var(--clr-neutral-700));
+    }
+  }

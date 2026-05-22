@@ -1,0 +1,23 @@
+@use "../abstracts" as *;
+.kl-cta {
+  padding: calc(var(--section-spacing) + 4rem) 0;
+  background-position: center;
+  background-size: cover;
+  background-attachment: scroll;
+  &__title-wrapper .title {
+    color: hsl(var(--clr-neutral-900));
+    font-size: var(--fs-600);
+    &--white {
+      color: white;
+    }
+  }
+  &__des {
+    &--white p {
+      color: white;
+    }
+    margin-bottom: 2rem;
+    p {
+      font-size: var(--fs-420);
+    }
+  }
+}

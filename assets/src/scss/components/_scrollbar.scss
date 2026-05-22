@@ -1,0 +1,10 @@
+body::-webkit-scrollbar {  width: 0.25rem; /* width of the entire scrollbar */
+}
+
+body::-webkit-scrollbar-track {
+  background: hsl(var(--clr-neutral-300)); /* color of the tracking area */
+}
+
+body::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--clr-secondary-300)); /* color of the scroll thumb */
+}

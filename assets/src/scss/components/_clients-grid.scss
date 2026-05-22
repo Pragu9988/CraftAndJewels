@@ -1,0 +1,103 @@
+@use "../abstracts" as *;
+.kl-clients,
+.kl-tech {
+    padding: var(--section-spacing) 0;
+    background-color: hsl(var(--clr-neutral-100));
+    .title {
+        font-size: var(--fs-550);
+        margin-bottom: 1em;
+    }
+    &__grid-wrapper,
+    &__heading-wrapper {
+        max-width: 1080px;
+        width: 90%;
+        margin: auto;
+    }
+    &__grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        justify-content: center;
+        column-gap: 2em;
+        row-gap: 1.5em;
+        // &__grid-item {
+        //     margin: auto;
+        // }
+        @include mq("md") {
+            justify-content: center;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        @include mq("lg") {
+            grid-template-columns: repeat(4, 1fr);
+            justify-content: center;
+            column-gap: 1.5em;
+            row-gap: 2rem;
+        }
+    }
+    ul {
+        list-style: none;
+    }
+    &__grid-item {
+        // margin: auto;
+        border: 2px solid hsl(var(--clr-primary-200) / 20%);
+        // box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+        border-radius: 5px;
+        padding: 10px 1rem;
+        width: 100%;
+        text-align: center;
+        &>img {
+            max-width: 150px;
+            height: auto;
+        }
+        @include mq("md") {
+            padding: 15px 7px;
+        }
+        @include mq("lg") {
+            padding: 18px 10px;
+        }
+    }
+}
+
+.kl-tech {
+    background-color: hsl(var(--clr-primary-100) / 50%);
+    &__heading-wrapper {
+        text-align: center;
+    }
+    .kl-tech__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+        @include mq("md") {
+            justify-content: center;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        @include mq("lg") {
+            grid-template-columns: repeat(5, 1fr);
+            // justify-content: center;
+            gap: 1.5rem;
+            // align-items: stretch;
+        }
+    }
+    .kl-tech__grid-item {
+        background-color: white;
+        transform: translateY(0);
+        .title {
+            font-size: var(--fs-400);
+            font-weight: 500;
+            margin-bottom: 0;
+            color: hsl(204, 100%, 27%);
+            color: hsl(var(--clr-primary-500));
+            margin-top: 5px;
+            line-height: 1.2em;
+        }
+        &>i {
+            font-size: 2.5rem;
+            @include mq("md") {
+                font-size: 3.5rem;
+            }
+        }
+        &:hover {
+            &>i {
+                transform: translateY(-5px);
+            }
+        }
+    }
+}

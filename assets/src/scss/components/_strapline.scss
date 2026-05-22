@@ -1,0 +1,14 @@
+@use "../base/typography" as *;
+
+.strapline {
+  text-transform: uppercase;
+  font-style: italic;
+  font-family: var(--font-display);
+  display: block;
+  letter-spacing: 1px;
+  list-style-type: disc;
+  color: var(--clr-primary-500);
+  font-size: var(--fs-310);
+  margin-bottom: 10px;
+  font-weight: 500;
+}

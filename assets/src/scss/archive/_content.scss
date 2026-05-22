@@ -1,0 +1,115 @@
+@use "../abstracts" as *;
+
+.kl-post {
+    &__row {
+        padding-bottom: var(--section-spacing);
+    }
+
+    &__col {
+        margin-bottom: 2rem;
+    }
+
+    &__grid-box {
+        max-width: 98%;
+        border-radius: 5px;
+        border: 1px solid hsl(var(--clr-neutral-200));
+        // background-color: hsl(var(--clr-neutral-200));
+
+        &:hover {
+            .kl-post__img-wrapper img {
+                transform: scale(1.1);
+            }
+            .title {
+                color: var(--clr-primary-500);
+            }
+        }
+
+    }
+
+    &__img-wrapper {
+        position: relative;
+        overflow: hidden;
+        border-radius: 8px 8px 0 0;
+
+        img {
+            width: 100%;
+            aspect-ratio: 3/2;
+
+            object-fit: cover;
+            transition: all 0.3s ease-in;
+
+            &:hover {
+                transform: scale(1.1);
+            }
+
+        }
+
+        .post-date {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            font-size: var(--fs-300);
+            font-weight: 300;
+            background-color: hsl(var(--clr-primary-600));
+            line-height: 1.4em;
+            border-radius: 30px;
+            padding: 2px 20px;
+            color: hsl(var(--clr-neutral-100));
+        }
+    }
+
+    &__content-wrapper {
+        padding-top: 1rem;
+    }
+
+    &__post-content {
+        .title {
+            font-size: var(--fs-450);
+            color: hsl(var(--clr-neutral-800));
+            line-height: 1.3em;
+            margin-bottom: 0.7rem;
+            font-weight: 500;
+
+
+        }
+
+        p {
+            color: hsl(var(--clr-neutral-700));
+            font-size: var(--fs-350);
+            line-height: 1.5em;
+            font-weight: 400;
+        }
+    }
+
+    &__read-more {
+        margin-top: 1em;
+
+        .cta {
+            color: hsl(var(--clr-primary-600));
+            font-size: var(--fs-350);
+            transition: all 0.3s ease-in-out;
+            text-decoration: none !important;
+
+            &:hover {
+                margin-right: 10px;
+                transition: all 0.5s ease-in-out;
+            }
+        }
+
+        .cta-icon:before {
+            color: hsl(var(--clr-primary-400));
+            font-size: var(--fs-410);
+            position: relative;
+            top: 2px;
+        }
+
+        .cta-icon:before:hover {
+            left: 7px;
+        }
+
+        .cta.readmore {
+            font-size: var(--fs-300);
+            color: var(--clr-primary-400);
+        }
+    }
+}

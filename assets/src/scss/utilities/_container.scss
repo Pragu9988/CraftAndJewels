@@ -1,0 +1,30 @@
+.kl-container {
+    max-width: 96rem;
+    width: 94%;
+    margin: 0 auto;
+
+    &--full {
+        padding: 0;
+        max-width: unset;
+        width: 90%;
+        margin: 0 auto;
+
+        &>.row {
+            margin-left: 0;
+            margin-right: 0;
+        }
+    }
+}
+
+.kl-relative {
+    position: relative;
+}
+
+.kl-absolute {
+    position: absolute;
+}
+
+.kl-fixed {
+    position: fixed;
+    top: 0;
+}

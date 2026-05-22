@@ -1,0 +1,180 @@
+/* sf-pro display thin*/
+
+@font-face {
+  font-family: "SF-Pro-Display";
+  font-style: normal;
+  font-weight: 100;
+  src: url("sf-pro/SF-Pro-Display-Thin.eot");
+  /* IE9 Compat Modes */
+  src: url("sf-pro/SF-Pro-Display-Thin.woff") format(" woff "),
+    url("sf-pro/SF-Pro-Display-Thin.ttf") format("truetype");
+}
+
+/* Inter-ExtraLight */
+
+@font-face {
+  font-family: "Sf-Pro-Display";
+  font-style: normal;
+  font-weight: 200;
+  src: url("sf-pro/SF-Pro-Display-Ultralight.eot");
+  /* IE9 Compat Modes */
+  src: url("sf-pro/SF-Pro-Display-Ultralight.woff") format("woff"),
+    /* mordern browser*/ url("sf-pro/SF-Pro-Display-Ultralight.ttf")
+      format("truetype");
+  /* sofari android ios  */
+}
+
+@font-face {
+  font-family: "Sf-Pro_Display";
+  font-style: normal;
+  font-weight: 300;
+  src: url("sf-pro/sf-pro-display-light.eot");
+  /* IE9 compact Modes  */
+  src: url("sf-pro/SF-Pro-Display-Light.woff") format("woff"),
+    url("sf-pro/SF-Pro-Display-Light.ttf") format("ttf");
+  /* safari android and ios */
+}
+
+@font-face {
+  font-family: "Sf-Pro-Display";
+  font-style: normal;
+  font-weight: 400;
+  src: url("sf-pro/SF-Pro-Display-Regular.eot");
+  /* IE9 compact modes  */
+  src: url("sf-pro/SF-Pro-Display-Regular.woff") format("woff"),
+    /* morden browser */ url("sf-pro/SF-Pro-Display-Regular.truetype")
+      format("ttf");
+  /* safari andriod and ios */
+}
+
+@font-face {
+  font-family: "Sf-Pro_Display";
+  font-style: normal;
+  font-weight: 500;
+  src: url("sf-pro/SF-Pro-Display-Medium.eot");
+  /*IE9 compact modes  */
+  src: url("sf-pro/SF-Pro-Display-Medium.woff") format("woff"),
+    /* morden browesr */ url("sf-pro/SF-Pro-Display-Medium.ttf")
+      format("truetype");
+  /*safari android and ios  */
+}
+
+@font-face {
+  font-family: "Sf-Pro-Display";
+  font-style: normal;
+  font-weight: 600;
+  src: url("sf-pro/SF-Pro-Display-Semibold.eot");
+  src: url("sf-pro/SF-Pro-Display-Semibold.woff") format("woff"),
+    /* morden browser */ url("sf-pro/SF-Pro-Display-Semibold.ttf")
+      format("truetype");
+  /* sofari android and ios */
+}
+
+@font-face {
+  font-family: "Sf-Pro-Display";
+  font-style: normal;
+  font-weight: 700;
+  src: url("sf-pro/SF-Pro-Display-Bold.eot");
+  src: url("sf-pro/SF-Pro-Display-Bold.woff") format("woff"),
+    /* morden browser */ url("sf-pro/SF-Pro-Display-Bold.ttf")
+      format("truetype");
+}
+
+@font-face {
+  font-family: "Sf-Pro-Display";
+  font-style: normal;
+  font-weight: 800;
+  src: url("sf-pro/SF-Pro-Display-Black.eot");
+  src: url("sf-pro/SF-Pro-Display-Black.woff") format("woff"),
+    url("sf-pro/SF-Pro-Display-Bold.ttf") format("truetype");
+}
+
+/* Hellix Font*/
+
+@font-face {
+  font-family: "Hellix";
+  font-style: normal;
+  font-weight: 100;
+  src: url("Hellix/Hellix-Thin.eot");
+  /* IE9 Compat Modes */
+  src: url("Hellix/Hellix-Thin.woff") format(" woff"),
+    url("Hellix/Hellix-Thin.woff2") format(" woff2"),
+    url("Hellix/Hellix-Thin.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Hellix";
+  font-style: normal;
+  font-weight: 300;
+  src: url("Hellix/Hellix-light.eot");
+  /* IE9 compact Modes  */
+  src: url("Hellix/Hellix-Light.woff") format("woff"),
+    url("Hellix/Hellix-Light.woff2") format("woff2"),
+    url("Hellix/Hellix-Light.ttf") format("ttf");
+  /* safari android and ios */
+}
+
+@font-face {
+  font-family: "Hellix";
+  font-style: normal;
+  font-weight: 400;
+  src: url("Hellix/Hellix-Regular.eot");
+  /* IE9 compact modes  */
+  src: url("Hellix/Hellix-Regular.woff") format("woff"),
+    url("Hellix/Hellix-Regular.woff2") format("woff2"),
+    url("Hellix/Hellix-Regular.truetype") format("ttf");
+  /* safari andriod and ios */
+}
+
+@font-face {
+  font-family: "Hellix";
+  font-style: normal;
+  font-weight: 500;
+  src: url("Hellix/Hellix-Medium.eot");
+  /*IE9 compact modes  */
+  src: url("Hellix/Hellix-Medium.woff") format("woff"),
+    url("Hellix/Hellix-Medium.woff2") format("woff2"),
+    url("Hellix/Hellix-Medium.ttf") format("truetype");
+  /*safari android and ios  */
+}
+
+@font-face {
+  font-family: "Hellix";
+  font-style: normal;
+  font-weight: 600;
+  src: url("Hellix/Hellix-SemiBold.eot");
+  src: url("Hellix/Hellix-SemiBold.woff") format("woff"),
+    url("Hellix/Hellix-SemiBold.woff2") format("woff2"),
+    url("Hellix/Hellix-SemiBold.ttf") format("truetype");
+  /* sofari android and ios */
+}
+
+@font-face {
+  font-family: "Hellix";
+  font-style: normal;
+  font-weight: 700;
+  src: url("Hellix/Hellix-Bold.eot");
+  src: url("Hellix/Hellix-Bold.woff") format("woff"),
+    url("Hellix/Hellix-Bold.woff2") format("woff2"),
+    url("Hellix/Hellix-Bold.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Hellix";
+  font-style: normal;
+  font-weight: 800;
+  src: url("Hellix/Hellix-Black.eot");
+  src: url("Hellix/Hellix-Black.woff") format("woff"),
+    url("Hellix/Hellix-Black.woff2") format("woff2"),
+    url("Hellix/Hellix-Black.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Space Mono";
+  font-style: normal;
+  font-weight: 800;
+  src: url("spacemono/spacemono-regular.eot");
+  src: url("spacemono/spacemono-regular.woff") format("woff"),
+    url("spacemono/spacemono-regular.woff2") format("woff2"),
+    url("spacemono/spacemono-regular.ttf") format("truetype");
+}

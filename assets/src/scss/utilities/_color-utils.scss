@@ -1,0 +1,29 @@
+@use "../abstracts" as *;
+
+@each $color, $shade in $colors {
+  @each $prop, $value in $shade {
+    // .text-#{$color}-#{$prop} {
+    //   color: hsl(var(--clr-#{$color}-#{$prop})) !important;
+    // }
+
+    // .bg-#{$color}-#{$prop} {
+    //   background-color: hsl(var(--clr-#{$color}-#{$prop})) !important;
+    // }
+  }
+}
+
+.primary {
+  --clr: var(--clr-primary-400);
+}
+.secondary {
+  --clr: var(--clr-secondary-400);
+}
+.error {
+  --clr: var(--clr-error-400);
+}
+.warning {
+  --clr: var(--clr-warning-400);
+}
+.success {
+  --clr: var(--clr-success-400);
+}

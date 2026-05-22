@@ -1,0 +1,93 @@
+@use "../abstracts" as *;
+
+.ht-wishlist {
+           padding-block: var(--section-spacing);
+
+           .yith_wcwl_wishlist_footer .yith-wcwl-share {
+                      float: unset !important;
+           }
+
+           .woocommerce .wishlist-title {
+                      margin-bottom: 0 !important;
+           }
+
+           .wishlist-title h2 {
+
+                      font-size: var(--fs-440);
+                      font-weight: 600;
+                      margin-bottom: 12px;
+                      color: var(--clr-neutral-500);
+                      margin-bottom: 10px;
+           }
+
+           .wishlist_table tr td,
+           .wishlist_table tr th {
+                      padding: 12px 10px;
+                      background-color: unset !important;
+           }
+
+           .wishlist_table th,
+           .wishlist_table td,
+           .wishlist_table .cart-subtotal th,
+           .wishlist_table .cart-subtotal td,
+           .wishlist_table .woocommerce-shipping-totals th,
+           .wishlist_table .woocommerce-shipping-totals td,
+           .wishlist_table .order-total th,
+           .wishlist_table .order-total td {
+                      font-size: var(--fs-350);
+                      color: var(--clr-neutral-500);
+           }
+
+           .product-name a {
+                      font-size: var(--fs-350);
+                      color: var(--clr-neutral-500);
+                      cursor: pointer;
+
+                      &:hover {
+                                 color: var(--clr-text-400);
+                      }
+           }
+
+           .product-add-to-cart a {
+                      padding: 8px 20px !important;
+                      background-color: transparent !important;
+                      border: 1px solid var(--clr-primary-400) !important;
+                      color: var(--clr-primary-400) !important;
+                      border-radius: var(--radius-lg) !important;
+           }
+
+           .product-price {
+                      color: var(--clr-text-500) !important;
+                      font-size: var(--fs-410) !important;
+                      font-weight: 500 !important;
+
+                      del,
+                      ins {
+                                 color: inherit !important;
+                                 opacity: 1 !important;
+                                 background-color: unset !important;
+                      }
+           }
+
+           .value {
+                      color: var(--clr-text-500) !important;
+                      font-size: var(--fs-410) !important;
+                      font-weight: 500 !important;
+
+                      del,
+                      ins {
+                                 color: inherit !important;
+                                 opacity: 1 !important;
+                                 background-color: unset !important;
+                      }
+           }
+
+
+
+           .wishlist_table.mobile li {
+                      padding-top: 10px;
+                      padding-bottom: 10px;
+                      border-bottom: 1px solid var(--clr-neutral-200);
+           }
+
+}

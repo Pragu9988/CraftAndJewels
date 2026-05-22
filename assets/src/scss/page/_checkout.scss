@@ -1,0 +1,64 @@
+.ht-checout-page {
+           padding-block: var(--section-spacing);
+
+           .woocommerce-info,
+           .woocommerce-noreviews,
+           p.no-comments {
+                      background-color: var(--clr-secondary-200);
+                      border-top: 2px solid var(--clr-primary-400) !important;
+                      padding: 7px 2em 7px 3.5em;
+           }
+
+           .col2-set .col-1,
+           .col2-set .col-1 {
+                      float: unset;
+                      width: 100%;
+           }
+
+           .col2-set .col-2,
+           .col2-set .col-2 {
+                      float: unset;
+                      width: 100%;
+           }
+
+           .woocommerce-info::before {
+                      color: var(--clr-primary-400) !important;
+           }
+
+           // .woocommerce-error::before,
+           // .woocommerce-info::before,
+           // .woocommerce-message::before {
+           //            top: 7px !important;
+           // }
+
+           .showlogin,
+           .showcoupon {
+                      color: var(--clr-text-400);
+           }
+
+           .checkout-tilte {
+                      font-size: var(--fs-440);
+                      margin-bottom: 12px;
+                      font-weight: 600;
+                      color: var(--clr-neutral-500);
+           }
+}
+
+.woocommerce form .form-row .input-text,
+.woocommerce form .form-row select,
+.woocommerce form .form-row textarea,
+.woocommerce form .form-row .select2-container--default .select2-selection--single {
+           padding: 6px 12px !important;
+           background-color: var(--background-light) !important;
+           border: 1px solid var(--clr-neutral-300) !important;
+}
+
+.woocommerce form .form-row .input-text:focus-visible,
+.woocommerce form .form-row select:focus-visible {
+           outline: 1px solid var(--clr-secondary-200) !important;
+}
+
+.woocommerce form .form-row.woocommerce-validated input.input-text,
+.woocommerce form .form-row.woocommerce-validated select {
+           border-color: var(--clr-secondary-200) !important;
+}
