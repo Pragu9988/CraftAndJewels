@@ -8,7 +8,8 @@
  * - Repeater field: hero_slides
  *
  * Repeater Fields:
- * - image (Image)
+ * - image (Image) — desktop
+ * - mobile_image (Image) — mobile only; falls back to image when empty
  * - title (Text)
  * - sub (Textarea)
  * - link_primary (URL)
@@ -34,7 +35,8 @@ if (! function_exists('have_rows')) {
 
                     <?php while (have_rows('hero_slides')) : the_row();
 
-                        $image = get_sub_field('image');
+                        $image        = get_sub_field('image');
+                        $mobile_image = get_sub_field('mobile_image');
 
                         $title = get_sub_field('title');
                         $sub = get_sub_field('sub');
@@ -45,10 +47,19 @@ if (! function_exists('have_rows')) {
                         $link_secondary = get_sub_field('link_secondary');
                         $btn_secondary = get_sub_field('btn_secondary');
 
-                        // Skip slide if image missing
+                        // Skip slide if desktop image missing
                         if (empty($image)) {
                             continue;
                         }
+
+                        if (empty($mobile_image)) {
+                            $mobile_image = $image;
+                        }
+
+                        $slide_image_args = [
+                            'alt'     => esc_attr($title),
+                            'loading' => 'eager',
+                        ];
                     ?>
 
                         <li class="splide__slide ht-hero-slider__slide">
@@ -61,11 +72,18 @@ if (! function_exists('have_rows')) {
                                     $image['ID'],
                                     'full',
                                     false,
-                                    [
-                                        'class'   => 'ht-hero-slider__image',
-                                        'alt'     => esc_attr($title),
-                                        'loading' => 'eager',
-                                    ]
+                                    array_merge($slide_image_args, [
+                                        'class' => 'ht-hero-slider__image ht-hero-slider__image--desktop',
+                                    ])
+                                );
+
+                                echo wp_get_attachment_image(
+                                    $mobile_image['ID'],
+                                    'full',
+                                    false,
+                                    array_merge($slide_image_args, [
+                                        'class' => 'ht-hero-slider__image ht-hero-slider__image--mobile',
+                                    ])
                                 );
                                 ?>
 
