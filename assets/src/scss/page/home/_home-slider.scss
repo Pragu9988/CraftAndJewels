@@ -77,6 +77,22 @@
          object-fit: cover;
          object-position: center;
       }
+
+      .ht-hero-slider__image--desktop {
+         display: none;
+
+         @include mq("md") {
+            display: block;
+         }
+      }
+
+      .ht-hero-slider__image--mobile {
+         display: block;
+
+         @include mq("md") {
+            display: none;
+         }
+      }
    }
 
    &__overlay {
