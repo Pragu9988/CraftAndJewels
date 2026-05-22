@@ -171,38 +171,59 @@
 
            }
 
-           .woocommerce-pagination {
-                      margin-top: 2.5rem;
-                      padding-top: 2rem;
-                      border-top: 1px solid var(--clr-secondary-200);
+           .woocommerce-products-header__title {
+                      font-size: var(--fs-500) !important;
+                      font-weight: 700;
+                      color: var(--clr-text-500);
+                      transition: all 0.3s ease;
+                      margin-bottom: 10px;
+           }
+}
 
-                      @include mq("lg") {
-                                 margin-top: 3rem;
-                                 padding-top: 2.5rem;
+/* ─── Shop pagination (WooCommerce default + theme) ─── */
+.woocommerce nav.woocommerce-pagination,
+.ht-shop-page nav.woocommerce-pagination {
+           margin-top: 2.5rem;
+           padding-top: 2rem;
+           border-top: 1px solid var(--clr-secondary-200);
+           text-align: center;
+
+           @include mq("lg") {
+                      margin-top: 3rem;
+                      padding-top: 2.5rem;
+           }
+
+           ul,
+           ul.page-numbers {
+                      display: flex;
+                      flex-wrap: wrap;
+                      align-items: center;
+                      justify-content: center;
+                      gap: 0.375rem;
+                      list-style: none;
+                      margin: 0;
+                      padding: 0;
+                      border: none;
+                      border-right: none;
+                      clear: both;
+                      white-space: normal;
+
+                      @include mq("md") {
+                                 gap: 0.5rem;
                       }
 
-                      ul.page-numbers {
-                                 display: flex;
-                                 flex-wrap: wrap;
-                                 align-items: center;
-                                 justify-content: center;
-                                 gap: 0.375rem;
-                                 list-style: none;
+                      > li {
                                  margin: 0;
                                  padding: 0;
+                                 list-style: none;
+                                 float: none;
+                                 display: list-item;
+                                 overflow: visible;
+                                 border: none;
+                                 border-right: none;
 
-                                 @include mq("md") {
-                                            gap: 0.5rem;
-                                 }
-
-                                 > li {
-                                            margin: 0;
-                                            padding: 0;
-                                            list-style: none;
-                                            float: none;
-                                 }
-
-                                 .page-numbers {
+                                 a.page-numbers,
+                                 span.page-numbers {
                                             display: inline-flex;
                                             align-items: center;
                                             justify-content: center;
@@ -226,73 +247,65 @@
                                                        min-width: 2.5rem;
                                                        height: 2.5rem;
                                             }
+                                 }
 
-                                            &:not(.dots):not(.current):hover {
-                                                       color: var(--clr-primary-500);
-                                                       border-color: var(--clr-primary-300);
-                                                       background-color: var(--clr-primary-100);
-                                                       box-shadow: 0 2px 6px rgba(166, 124, 16, 0.12);
-                                            }
+                                 a.page-numbers:not(.dots):not(.current):hover {
+                                            color: var(--clr-primary-500);
+                                            border-color: var(--clr-primary-300);
+                                            background-color: var(--clr-primary-100);
+                                            box-shadow: 0 2px 6px rgba(166, 124, 16, 0.12);
+                                 }
 
-                                            &.current {
+                                 a.page-numbers.current,
+                                 span.page-numbers.current {
+                                            background-color: var(--clr-primary-400);
+                                            border-color: var(--clr-primary-400);
+                                            color: var(--clr-text-200);
+                                            font-weight: 600;
+                                            box-shadow: 0 2px 8px rgba(166, 124, 16, 0.25);
+                                            cursor: default;
+                                 }
+
+                                 a.page-numbers.dots,
+                                 span.page-numbers.dots {
+                                            min-width: auto;
+                                            height: auto;
+                                            padding: 0 0.15rem;
+                                            border: none;
+                                            background: transparent;
+                                            box-shadow: none;
+                                            color: var(--clr-secondary-400);
+                                            font-family: var(--font-secondary);
+                                            letter-spacing: 0.15em;
+                                 }
+
+                                 a.page-numbers.prev,
+                                 a.page-numbers.next {
+                                            font-size: 1.125rem;
+                                            color: var(--clr-primary-500);
+                                            border-color: var(--clr-primary-200);
+                                            background-color: var(--clr-primary-100);
+
+                                            &:hover {
                                                        background-color: var(--clr-primary-400);
                                                        border-color: var(--clr-primary-400);
                                                        color: var(--clr-text-200);
-                                                       font-weight: 600;
-                                                       box-shadow: 0 2px 8px rgba(166, 124, 16, 0.25);
-                                                       cursor: default;
-                                            }
-
-                                            &.dots {
-                                                       min-width: auto;
-                                                       height: auto;
-                                                       padding: 0 0.15rem;
-                                                       border: none;
-                                                       background: transparent;
-                                                       box-shadow: none;
-                                                       color: var(--clr-secondary-400);
-                                                       font-family: var(--font-secondary);
-                                                       letter-spacing: 0.15em;
-                                            }
-
-                                            &.prev,
-                                            &.next {
-                                                       font-size: 1.125rem;
-                                                       color: var(--clr-primary-500);
-                                                       border-color: var(--clr-primary-200);
-                                                       background-color: var(--clr-primary-100);
-
-                                                       &:hover {
-                                                                  background-color: var(--clr-primary-400);
-                                                                  border-color: var(--clr-primary-400);
-                                                                  color: var(--clr-text-200);
-                                                       }
                                             }
                                  }
 
-                                 a.page-numbers {
-                                            &:visited {
-                                                       color: var(--clr-secondary-500);
-                                            }
+                                 a.page-numbers:visited {
+                                            color: var(--clr-secondary-500);
+                                 }
 
-                                            &:hover:visited {
-                                                       color: var(--clr-primary-500);
-                                            }
+                                 a.page-numbers:hover:visited {
+                                            color: var(--clr-primary-500);
+                                 }
 
-                                            &.prev:hover:visited,
-                                            &.next:hover:visited {
-                                                       color: var(--clr-text-200);
-                                            }
+                                 a.page-numbers.prev:hover:visited,
+                                 a.page-numbers.next:hover:visited {
+                                            color: var(--clr-text-200);
                                  }
                       }
-           }
-
-           .woocommerce-products-header__title {
-                      font-size: var(--fs-500) !important;
-                      font-weight: 700;
-                      color: var(--clr-text-500);
-                      transition: all 0.3s ease;
-                      margin-bottom: 10px;
            }
 }
 
