@@ -1,0 +1,13 @@
+/node_modules
+/dist
+/build
+/public
+/src
+/vendor
+/wp-content
+/wp-includes
+/wp-admin
+/wp-config.php
+/wp-config.php.example
+/wp-config.php.example.bak
+/wp-config.php.example.bak.2
