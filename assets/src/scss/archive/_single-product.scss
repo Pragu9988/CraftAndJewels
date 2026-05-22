@@ -1,5 +1,58 @@
 @use "../abstracts" as *;
 
+@mixin ht-product-prose {
+   font-family: var(--font-secondary, sans-serif);
+   font-size: var(--fs-350);
+   line-height: 1.7;
+   color: var(--clr-secondary-400, #8c8a85);
+   letter-spacing: 0.01em;
+
+   p {
+      margin: 0 0 1.15em;
+      color: inherit;
+      font-weight: 400;
+
+      &:last-child {
+         margin-bottom: 0;
+      }
+   }
+
+   strong {
+      font-weight: 600;
+      color: var(--clr-secondary-500, #3a3835);
+   }
+
+   h3 {
+      font-family: var(--font-secondary, sans-serif);
+      font-size: var(--fs-400);
+      font-weight: 600;
+      line-height: 1.35;
+      color: var(--clr-secondary-500, #3a3835);
+      margin: 1.5em 0 0.65em;
+      letter-spacing: 0.02em;
+
+      &:first-child {
+         margin-top: 0;
+      }
+   }
+
+   ul,
+   ol {
+      margin: 0 0 1.15em;
+      padding-left: 1.35em;
+
+      li {
+         margin-bottom: 0.55em;
+         line-height: 1.65;
+         color: inherit;
+
+         &:last-child {
+            margin-bottom: 0;
+         }
+      }
+   }
+}
+
 .ht-single-product {
 
    display: flex;
@@ -81,14 +134,12 @@
       }
 
       .woocommerce-product-details__short-description {
-         font-size: 14px;
-         line-height: 1.6;
-
+         @include ht-product-prose;
          margin-bottom: 30px;
          max-width: 90%;
 
          p {
-            color: #666 !important;
+            font-weight: 400;
          }
       }
 
@@ -249,16 +300,18 @@
       }
 
       .ht-accordion-content {
+         @include ht-product-prose;
          max-height: 0;
          overflow: hidden;
          transition: max-height 0.3s ease, padding 0.3s ease;
-         font-size: 14px;
-         line-height: 1.6;
-         color: #666;
+
+         > h2 {
+            display: none;
+         }
 
          &.active {
             max-height: 1000px;
-            padding: 15px 0 25px;
+            padding: 0 0 28px;
          }
       }
    }
