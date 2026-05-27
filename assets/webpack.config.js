@@ -15,6 +15,7 @@ const entry = {
     main: JS_DIR + "/main.js",
     autoScroll: JS_DIR + "/autoScroll.js",
     floating: JS_DIR + "/floating.js",
+    checkoutPaymentProof: JS_DIR + "/checkout-payment-proof.js",
 };
 
 const output = {

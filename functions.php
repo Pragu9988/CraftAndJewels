@@ -132,6 +132,15 @@ if (!class_exists('OCTOWAYS_PORTFOLIO_THEME')) {
 			// Load WooCommerce compatibility
 			if (class_exists('WooCommerce')) {
 				require_once $inc_path . 'woocommerce.php';
+
+				if (file_exists($inc_path . 'classes/class-wc-gateway-upload-proof.php')) {
+					require_once $inc_path . 'classes/class-wc-gateway-upload-proof.php';
+				}
+
+				if (file_exists($inc_path . 'classes/class-checkout-payment-proof.php')) {
+					require_once $inc_path . 'classes/class-checkout-payment-proof.php';
+					new \OCTOWAYS_THEME\Inc\Checkout_Payment_Proof();
+				}
 			}
 		}
 

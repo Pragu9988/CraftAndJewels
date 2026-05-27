@@ -2,10 +2,72 @@
            padding-block: 2rem;
 
            .checkout.woocommerce-checkout {
-                      align-items: flex-start;
+                      > .woocommerce-NoticeGroup-checkout {
+                                 width: 100%;
+                                 margin: 0 0 1rem;
+                      }
+
+                      .woocommerce-error {
+                                 display: block;
+                                 list-style: none;
+                                 margin: 0 0 1rem !important;
+                                 padding: 14px 16px !important;
+                                 background: linear-gradient(180deg, #fff6f6 0%, #fff0f0 100%) !important;
+                                 border: 1px solid #e4b4b4 !important;
+                                 border-top: 1px solid #e4b4b4 !important;
+                                 border-radius: 10px;
+                                 box-shadow: 0 6px 16px rgba(207, 77, 77, 0.08);
+                                 color: #8b2e2e !important;
+
+                                 &::before {
+                                            display: none !important;
+                                 }
+
+                                 li {
+                                            margin: 0;
+                                            padding: 0.45rem 0;
+                                            list-style: none;
+
+                                            &:not(:last-child) {
+                                                       border-bottom: 1px solid rgba(207, 77, 77, 0.14);
+                                            }
+
+                                            a {
+                                                       display: block;
+                                                       color: inherit;
+                                                       text-decoration: none;
+                                                       font-size: var(--fs-250, 0.95rem);
+                                                       line-height: 1.4;
+
+                                                       strong {
+                                                                  font-weight: 600;
+                                                       }
+
+                                                       &:hover,
+                                                       &:focus-visible {
+                                                                  color: #cf4d4d;
+                                                                  text-decoration: underline;
+                                                       }
+                                            }
+                                 }
+                      }
+           }
+
+           .ht-checkout-layout {
+                      display: flex;
+                      flex-direction: column;
+                      gap: 1.25rem;
+
+                      @media (min-width: 1024px) {
+                                 display: grid;
+                                 grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+                                 column-gap: 3rem;
+                                 align-items: start;
+                      }
            }
 
            .ht-checkout-form {
+                      min-width: 0;
                       background-color: transparent;
                       border: 0;
                       border-radius: 14px;
@@ -67,6 +129,25 @@
 
            .woocommerce form .form-row {
                       margin-bottom: 0.75rem;
+           }
+
+           .form-row.woocommerce-invalid {
+                      margin-bottom: 0.85rem;
+
+                      > label {
+                                 color: var(--clr-error-400, #cf4d4d);
+                      }
+           }
+
+           p.checkout-inline-error-message {
+                      display: block;
+                      width: 100%;
+                      margin: 0.4rem 0 0 !important;
+                      padding: 0;
+                      font-size: var(--fs-200, 0.8125rem);
+                      line-height: 1.35;
+                      font-weight: 500;
+                      color: var(--clr-error-400, #cf4d4d);
            }
 
            .woocommerce form .form-row label {
@@ -224,6 +305,7 @@
            }
 
            .ht-checkout-order-card {
+                      min-width: 0;
                       position: sticky;
                       top: 1.5rem;
                       background: linear-gradient(180deg, rgba(163, 128, 72, 0.08) 0%, rgba(163, 128, 72, 0.03) 100%);
@@ -431,6 +513,147 @@
                       .woocommerce-shipping-fields,
                       .woocommerce-additional-fields {
                                  padding: 12px;
+                      }
+           }
+
+           .ht-upload-proof-trigger-wrap {
+                      margin: 0.5rem 0 0;
+           }
+
+           .ht-upload-proof-open-modal {
+                      margin-top: 0.25rem;
+           }
+}
+
+// Payment proof modal (checkout + thank-you)
+.ht-payment-proof-modal {
+           z-index: 10001;
+
+           &__dialog {
+                      max-width: 520px;
+                      padding: 28px 24px 32px;
+           }
+
+           &__close {
+                      top: 12px;
+                      right: 12px;
+           }
+
+           &__title {
+                      font-family: var(--ff-heading, "Playfair Display", serif);
+                      font-size: var(--fs-500, 1.5rem);
+                      font-weight: 600;
+                      color: var(--clr-neutral-500, #1f1f1f);
+                      margin: 0 0 0.5rem;
+           }
+
+           &__intro {
+                      font-size: var(--fs-250, 0.95rem);
+                      color: var(--clr-neutral-400, #555);
+                      margin-bottom: 0.75rem;
+
+                      p {
+                                 margin: 0 0 0.5rem;
+                      }
+           }
+
+           &__order {
+                      font-size: var(--fs-250, 0.95rem);
+                      font-weight: 700;
+                      color: var(--clr-primary-500, #8c6f3f);
+                      margin: 0 0 1rem;
+           }
+
+           &__qr {
+                      display: flex;
+                      justify-content: center;
+                      margin-bottom: 1.25rem;
+
+                      img {
+                                 display: block;
+                                 max-width: 240px;
+                                 width: 100%;
+                                 height: auto;
+                                 border-radius: 8px;
+                                 border: 1px solid rgba(163, 128, 72, 0.25);
+                                 background: #fff;
+                      }
+           }
+
+           &__success {
+                      padding: 1rem;
+                      border-radius: 8px;
+                      background: rgba(47, 155, 98, 0.12);
+                      color: #1f5c38;
+                      font-weight: 600;
+                      text-align: center;
+           }
+
+           .ht-cf7-payment-proof {
+                      .wpcf7 {
+                                 margin: 0;
+                      }
+
+                      .ht-cf7-label,
+                      label {
+                                 display: block;
+                                 font-size: var(--fs-300, 0.875rem);
+                                 font-weight: 600;
+                                 color: var(--clr-neutral-500);
+                                 margin-bottom: 0.35rem;
+                      }
+
+                      .ht-cf7-hint {
+                                 margin: 0 0 0.5rem;
+                                 font-size: var(--fs-200, 0.8125rem);
+                                 color: var(--clr-neutral-400, #777);
+                      }
+
+                      .ht-cf7-field--file {
+                                 margin-bottom: 0.75rem;
+                      }
+
+                      .ht-cf7-file,
+                      input[type="file"].wpcf7-form-control {
+                                 width: 100%;
+                                 padding: 10px 12px;
+                                 border-radius: 9px;
+                                 border: 1px dashed rgba(163, 128, 72, 0.45);
+                                 background-color: rgba(255, 255, 255, 0.9);
+                                 font-size: var(--fs-200, 0.8125rem);
+                      }
+
+                      .ht-cf7-input,
+                      .wpcf7-form-control:not(.wpcf7-submit) {
+                                 width: 100%;
+                                 min-height: 46px;
+                                 padding: 11px 14px;
+                                 border-radius: 9px;
+                                 border: 1px solid #d9d9d9;
+                                 background-color: #fff;
+                                 font-size: var(--fs-250, 0.95rem);
+                      }
+
+                      .wpcf7-submit,
+                      .ht-cf7-submit {
+                                 width: 100%;
+                                 min-height: 48px;
+                                 margin-top: 0.75rem;
+                                 border: 1px solid var(--clr-primary-400);
+                                 border-radius: 999px;
+                                 background-color: var(--clr-primary-400);
+                                 color: #fff;
+                                 font-weight: 700;
+                                 text-transform: uppercase;
+                                 letter-spacing: 0.03em;
+                                 cursor: pointer;
+                                 transition: all 0.2s ease;
+
+                                 &:hover,
+                                 &:focus-visible {
+                                            background-color: transparent;
+                                            color: var(--clr-primary-400);
+                                 }
                       }
            }
 }

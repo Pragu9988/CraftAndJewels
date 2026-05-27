@@ -34,11 +34,12 @@
 
 		?>
 		<form name="checkout" method="post"
-			class="checkout woocommerce-checkout flex flex-col gap-5 lg:flex-row justify-between lg:gap-12 lg:items-start"
+			class="checkout woocommerce-checkout"
 			action="<?php echo esc_url(wc_get_checkout_url()); ?>" enctype="multipart/form-data"
 			aria-label="<?php echo esc_attr__('Checkout', 'woocommerce'); ?>">
 
-			<div class="ht-checkout-form w-full lg:w-2/3">
+			<div class="ht-checkout-layout">
+			<div class="ht-checkout-form">
 				<?php if ($checkout->get_checkout_fields()): ?>
 
 					<?php do_action('woocommerce_checkout_before_customer_details'); ?>
@@ -58,7 +59,7 @@
 				<?php endif; ?>
 			</div>
 
-			<div class="ht-checkout-order-card w-full lg:w-1/3">
+			<div class="ht-checkout-order-card">
 				<?php do_action('woocommerce_checkout_before_order_review_heading'); ?>
 
 				<h3 id="order_review_heading" class="checkout-tilte">
@@ -74,6 +75,8 @@
 
 				<?php do_action('woocommerce_checkout_after_order_review'); ?>
 			</div>
+
+			</div><!-- .ht-checkout-layout -->
 
 		</form>
 
