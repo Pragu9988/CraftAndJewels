@@ -37,7 +37,7 @@
                                  margin: unset !important;
 
                                  .woocommerce-loop-product__title {
-                                            font-size: var(--fs-440) !important;
+                                            font-size: var(--fs-400) !important;
                                             font-weight: 600;
                                             color: var(--clr-text-500);
                                             transition: all 0.3s ease;
@@ -486,7 +486,7 @@
            }
 
            &__count {
-                      color: #8c8a85;
+                      color: var(--clr-secondary-400);
                       font-size: 0.8rem;
                       flex-shrink: 0;
            }
