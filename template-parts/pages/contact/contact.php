@@ -7,6 +7,8 @@
  * - contact_intro (optional) — replaces default intro paragraph
  * - contact_email, contact_phone, contact_address, contact_hours (optional) — sidebar details
  *
+ * Social icons: Appearance → Social Links (global, shared with footer).
+ *
  * Contact Form 7 — paste this into the CF7 form editor (Form tab):
  *
  * <div class="ht-cf7-grid">
@@ -136,6 +138,12 @@ $cf7_shortcode = function_exists('get_field') ? get_field('contact_cf7_shortcode
 							</div>
 						</li>
 					</ul>
+					<?php if (function_exists('octoways_get_social_links') && octoways_get_social_links() !== array()) : ?>
+						<div class="ht-contact__social">
+							<span class="ht-contact__channel-label"><?php esc_html_e('Follow us', 'octoways'); ?></span>
+							<?php octoways_render_social_links(array('modifier' => 'ht-social-list--contact')); ?>
+						</div>
+					<?php endif; ?>
 				</div>
 			</div>
 

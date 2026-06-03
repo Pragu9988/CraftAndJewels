@@ -118,6 +118,16 @@ if (!class_exists('OCTOWAYS_PORTFOLIO_THEME')) {
 				require_once $inc_path . 'acf-contact-page-fields.php';
 			}
 
+			if (file_exists($inc_path . 'helpers/social-links.php')) {
+				require_once $inc_path . 'helpers/social-links.php';
+			}
+
+			if (is_admin() && file_exists($inc_path . 'classes/class-social-links-settings.php')) {
+				require_once $inc_path . 'classes/class-social-links-settings.php';
+				$social_settings = new \OCTOWAYS_THEME\Inc\Social_Links_Settings();
+				$social_settings->register();
+			}
+
 			require_once $inc_path . 'custom-header.php';
 			require_once $inc_path . 'template-tags.php';
 			require_once $inc_path . 'template-functions.php';
@@ -140,6 +150,37 @@ if (!class_exists('OCTOWAYS_PORTFOLIO_THEME')) {
 				if (file_exists($inc_path . 'classes/class-checkout-payment-proof.php')) {
 					require_once $inc_path . 'classes/class-checkout-payment-proof.php';
 					new \OCTOWAYS_THEME\Inc\Checkout_Payment_Proof();
+				}
+
+				// Dynamic gold/silver pricing engine.
+				$metal_pricing_files = array(
+					'class-metal-rate-store.php',
+					'class-metal-price-calculator.php',
+					'class-metal-rate-sync.php',
+					'class-wc-dynamic-metal-pricing.php',
+					'class-metal-pricing-admin.php',
+				);
+
+				foreach ($metal_pricing_files as $metal_file) {
+					$metal_path = $inc_path . 'classes/' . $metal_file;
+					if (file_exists($metal_path)) {
+						require_once $metal_path;
+					}
+				}
+
+				if (class_exists('\OCTOWAYS_THEME\Inc\Metal_Rate_Store')) {
+					$rate_store  = new \OCTOWAYS_THEME\Inc\Metal_Rate_Store();
+					$calculator  = new \OCTOWAYS_THEME\Inc\Metal_Price_Calculator($rate_store);
+					$rate_sync   = new \OCTOWAYS_THEME\Inc\Metal_Rate_Sync($rate_store);
+					$rate_sync->register();
+
+					$metal_pricing = new \OCTOWAYS_THEME\Inc\WC_Dynamic_Metal_Pricing($rate_store, $calculator);
+					$metal_pricing->register();
+
+					if (is_admin()) {
+						$metal_admin = new \OCTOWAYS_THEME\Inc\Metal_Pricing_Admin($rate_store, $rate_sync, $calculator);
+						$metal_admin->register();
+					}
 				}
 			}
 		}

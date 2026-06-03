@@ -37,20 +37,11 @@
                                                        </div>
                                                        <p class="ht-footer__tagline">Crafted for generation in Himalayan</p>
                                                        <div class="ht-footer__social">
-                                                                  <ul class="ht-social-list">
-                                                                             <li><a href="#" aria-label="Instagram"><i
-                                                                                                              class="fa-brands fa-instagram"></i></a>
-                                                                             </li>
-                                                                             <li><a href="#" aria-label="Facebook"><i
-                                                                                                              class="fa-brands fa-facebook-f"></i></a>
-                                                                             </li>
-                                                                             <li><a href="#" aria-label="Pinterest"><i
-                                                                                                              class="fa-brands fa-pinterest-p"></i></a>
-                                                                             </li>
-                                                                             <li><a href="#" aria-label="Twitter"><i
-                                                                                                              class="fa-brands fa-twitter"></i></a>
-                                                                             </li>
-                                                                  </ul>
+                                                                  <?php
+                                                                  if (function_exists('octoways_render_social_links')) {
+                                                                             octoways_render_social_links();
+                                                                  }
+                                                                  ?>
                                                        </div>
                                             </div>
 
