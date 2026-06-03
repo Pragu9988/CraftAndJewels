@@ -143,18 +143,19 @@ function octoways_render_social_links($args = array())
 	$args = wp_parse_args(
 		$args,
 		array(
-			'modifier'       => '',
-			'wrapper_class'  => '',
+			'modifier'      => '',
+			'wrapper_class' => '',
 		)
 	);
 
-	get_template_part(
-		'template-parts/components/social',
-		'links',
-		array(
-			'links'          => $links,
-			'modifier'       => $args['modifier'],
-			'wrapper_class'  => $args['wrapper_class'],
-		)
-	);
+	$modifier      = $args['modifier'];
+	$wrapper_class = $args['wrapper_class'];
+
+	$template = get_template_directory() . '/template-parts/components/social-links.php';
+
+	if (!is_readable($template)) {
+		return;
+	}
+
+	include $template;
 }

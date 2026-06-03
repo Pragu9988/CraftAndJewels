@@ -11,14 +11,20 @@
 
 defined('ABSPATH') || exit;
 
+$passed_args = isset($args) && is_array($args) ? $args : array();
+
+if ((!isset($links) || !is_array($links)) && isset($passed_args['links']) && is_array($passed_args['links'])) {
+	$links = $passed_args['links'];
+}
+
 $links = isset($links) && is_array($links) ? $links : array();
 
 if ($links === array()) {
 	return;
 }
 
-$modifier      = isset($modifier) ? (string) $modifier : '';
-$wrapper_class = isset($wrapper_class) ? (string) $wrapper_class : '';
+$modifier = isset($modifier) ? (string) $modifier : (string) ($passed_args['modifier'] ?? '');
+$wrapper_class = isset($wrapper_class) ? (string) $wrapper_class : (string) ($passed_args['wrapper_class'] ?? '');
 
 $list_classes = array('ht-social-list');
 
