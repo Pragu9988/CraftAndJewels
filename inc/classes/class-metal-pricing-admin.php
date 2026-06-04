@@ -1,6 +1,6 @@
 <?php
 /**
- * Admin UI for material rates and product configuration (Spec v1.0).
+ * Admin UI for material rates and product configuration (Spec v1.1).
  *
  * @package OCTOWAYS_THEME
  */
@@ -153,7 +153,7 @@ class Metal_Pricing_Admin
 							<?php esc_html_e('Gold Cost = Gold Weight (g) × (24K Rate × Purity ÷ 24)', 'octoways'); ?>
 						</p>
 						<p class="ht-pricing-formula-card__note">
-							<?php esc_html_e('24K Rate is the gold rate you enter on this page. Purity is set per product (14K–24K).', 'octoways'); ?>
+							<?php esc_html_e('24K Rate is the gold rate you enter on this page. Purity is set per product (9K–24K).', 'octoways'); ?>
 						</p>
 						<table class="ht-pricing-formula-purity-table">
 							<thead>
@@ -194,6 +194,20 @@ class Metal_Pricing_Admin
 					</div>
 
 					<div class="ht-pricing-formula-card">
+						<span class="ht-pricing-formula-card__label"><?php esc_html_e('Gemstone cost', 'octoways'); ?></span>
+						<p class="ht-pricing-formula-card__eq">
+							<?php esc_html_e('Gemstone Cost = Gemstone Qty × Gemstone Rate (per product)', 'octoways'); ?>
+						</p>
+					</div>
+
+					<div class="ht-pricing-formula-card">
+						<span class="ht-pricing-formula-card__label"><?php esc_html_e('Plating & misc', 'octoways'); ?></span>
+						<p class="ht-pricing-formula-card__eq">
+							<?php esc_html_e('Gold plating, rhodium plating, and miscellaneous costs are fixed Rs. amounts per product.', 'octoways'); ?>
+						</p>
+					</div>
+
+					<div class="ht-pricing-formula-card">
 						<span class="ht-pricing-formula-card__label"><?php esc_html_e('Making charge', 'octoways'); ?></span>
 						<p class="ht-pricing-formula-card__eq">
 							<?php esc_html_e('Per gram: Total Weight (g) × Making Rate', 'octoways'); ?>
@@ -201,12 +215,15 @@ class Metal_Pricing_Admin
 						<p class="ht-pricing-formula-card__eq" style="margin-top:6px;">
 							<?php esc_html_e('Per piece: Fixed amount (Rs.)', 'octoways'); ?>
 						</p>
+						<p class="ht-pricing-formula-card__eq" style="margin-top:6px;">
+							<?php esc_html_e('Percentage: (Gold Cost + Silver Cost) × Making Charge %', 'octoways'); ?>
+						</p>
 					</div>
 
 					<div class="ht-pricing-formula-card ht-pricing-formula-card--final">
 						<span class="ht-pricing-formula-card__label"><?php esc_html_e('Final product price', 'octoways'); ?></span>
 						<p class="ht-pricing-formula-card__eq">
-							<?php esc_html_e('Final = Gold Cost + Silver Cost + Diamond Cost + Making Charge', 'octoways'); ?>
+							<?php esc_html_e('Final = Gold + Silver + Diamond + Making + Gemstone + Gold Plating + Rhodium Plating + Misc', 'octoways'); ?>
 						</p>
 						<p class="ht-pricing-formula-card__note">
 							<?php esc_html_e('Unused materials (zero weight) contribute Rs. 0.', 'octoways'); ?>
@@ -409,13 +426,18 @@ class Metal_Pricing_Admin
 			return;
 		}
 
-		$gold_weight    = get_post_meta($post->ID, Metal_Price_Calculator::META_GOLD_WEIGHT, true);
-		$gold_purity    = get_post_meta($post->ID, Metal_Price_Calculator::META_GOLD_PURITY, true);
-		$silver_weight  = get_post_meta($post->ID, Metal_Price_Calculator::META_SILVER_WEIGHT, true);
-		$diamond_weight = get_post_meta($post->ID, Metal_Price_Calculator::META_DIAMOND_WEIGHT, true);
-		$total_weight   = get_post_meta($post->ID, Metal_Price_Calculator::META_TOTAL_WEIGHT, true);
-		$charge_type    = get_post_meta($post->ID, Metal_Price_Calculator::META_MAKING_CHARGE_TYPE, true);
-		$charge_val     = get_post_meta($post->ID, Metal_Price_Calculator::META_MAKING_CHARGE_VALUE, true);
+		$gold_weight          = get_post_meta($post->ID, Metal_Price_Calculator::META_GOLD_WEIGHT, true);
+		$gold_purity          = get_post_meta($post->ID, Metal_Price_Calculator::META_GOLD_PURITY, true);
+		$silver_weight        = get_post_meta($post->ID, Metal_Price_Calculator::META_SILVER_WEIGHT, true);
+		$diamond_weight       = get_post_meta($post->ID, Metal_Price_Calculator::META_DIAMOND_WEIGHT, true);
+		$gemstone_qty         = get_post_meta($post->ID, Metal_Price_Calculator::META_GEMSTONE_QTY, true);
+		$gemstone_rate        = get_post_meta($post->ID, Metal_Price_Calculator::META_GEMSTONE_RATE, true);
+		$gold_plating_cost    = get_post_meta($post->ID, Metal_Price_Calculator::META_GOLD_PLATING_COST, true);
+		$rhodium_plating_cost = get_post_meta($post->ID, Metal_Price_Calculator::META_RHODIUM_PLATING_COST, true);
+		$misc_cost            = get_post_meta($post->ID, Metal_Price_Calculator::META_MISC_COST, true);
+		$total_weight         = get_post_meta($post->ID, Metal_Price_Calculator::META_TOTAL_WEIGHT, true);
+		$charge_type          = get_post_meta($post->ID, Metal_Price_Calculator::META_MAKING_CHARGE_TYPE, true);
+		$charge_val           = get_post_meta($post->ID, Metal_Price_Calculator::META_MAKING_CHARGE_VALUE, true);
 
 		$purity_options = array('' => __('— Select —', 'octoways'));
 		foreach (array_keys(Metal_Price_Calculator::get_supported_purities()) as $label) {
@@ -467,6 +489,58 @@ class Metal_Pricing_Admin
 
 		woocommerce_wp_text_input(
 			array(
+				'id'                => Metal_Price_Calculator::META_GEMSTONE_QTY,
+				'label'             => __('Gemstone quantity', 'octoways'),
+				'type'              => 'number',
+				'custom_attributes' => array('step' => '0.01', 'min' => '0'),
+				'value'             => $gemstone_qty,
+				'description'       => __('Carats or pieces, depending on product.', 'octoways'),
+			)
+		);
+
+		woocommerce_wp_text_input(
+			array(
+				'id'                => Metal_Price_Calculator::META_GEMSTONE_RATE,
+				'label'             => __('Gemstone rate (NPR per unit)', 'octoways'),
+				'type'              => 'number',
+				'custom_attributes' => array('step' => '0.01', 'min' => '0'),
+				'value'             => $gemstone_rate,
+				'description'       => __('Per-product rate (ruby, emerald, sapphire, etc.).', 'octoways'),
+			)
+		);
+
+		woocommerce_wp_text_input(
+			array(
+				'id'                => Metal_Price_Calculator::META_GOLD_PLATING_COST,
+				'label'             => __('Gold plating cost (NPR)', 'octoways'),
+				'type'              => 'number',
+				'custom_attributes' => array('step' => '0.01', 'min' => '0'),
+				'value'             => $gold_plating_cost,
+			)
+		);
+
+		woocommerce_wp_text_input(
+			array(
+				'id'                => Metal_Price_Calculator::META_RHODIUM_PLATING_COST,
+				'label'             => __('Rhodium plating cost (NPR)', 'octoways'),
+				'type'              => 'number',
+				'custom_attributes' => array('step' => '0.01', 'min' => '0'),
+				'value'             => $rhodium_plating_cost,
+			)
+		);
+
+		woocommerce_wp_text_input(
+			array(
+				'id'                => Metal_Price_Calculator::META_MISC_COST,
+				'label'             => __('Miscellaneous cost (NPR)', 'octoways'),
+				'type'              => 'number',
+				'custom_attributes' => array('step' => '0.01', 'min' => '0'),
+				'value'             => $misc_cost,
+			)
+		);
+
+		woocommerce_wp_text_input(
+			array(
 				'id'                => Metal_Price_Calculator::META_TOTAL_WEIGHT,
 				'label'             => __('Total product weight (g)', 'octoways'),
 				'type'              => 'number',
@@ -481,8 +555,9 @@ class Metal_Pricing_Admin
 				'id'      => Metal_Price_Calculator::META_MAKING_CHARGE_TYPE,
 				'label'   => __('Making charge type', 'octoways'),
 				'options' => array(
-					Metal_Price_Calculator::CHARGE_PER_GRAM  => __('Per gram', 'octoways'),
-					Metal_Price_Calculator::CHARGE_PER_PIECE => __('Per piece', 'octoways'),
+					Metal_Price_Calculator::CHARGE_PER_GRAM    => __('Per gram', 'octoways'),
+					Metal_Price_Calculator::CHARGE_PER_PIECE   => __('Per piece', 'octoways'),
+					Metal_Price_Calculator::CHARGE_PERCENTAGE  => __('Percentage of metal value', 'octoways'),
 				),
 				'value'   => $charge_type ?: Metal_Price_Calculator::CHARGE_PER_GRAM,
 			)
@@ -491,11 +566,11 @@ class Metal_Pricing_Admin
 		woocommerce_wp_text_input(
 			array(
 				'id'                => Metal_Price_Calculator::META_MAKING_CHARGE_VALUE,
-				'label'             => __('Making charge value (NPR)', 'octoways'),
+				'label'             => __('Making charge value', 'octoways'),
 				'type'              => 'number',
 				'custom_attributes' => array('step' => '0.01', 'min' => '0'),
 				'value'             => $charge_val,
-				'description'       => __('Overrides default making charge when set.', 'octoways'),
+				'description'       => __('NPR per gram or per piece, or percent (e.g. 12) for percentage type. Overrides default when set.', 'octoways'),
 			)
 		);
 
@@ -523,6 +598,21 @@ class Metal_Pricing_Admin
 		$diamond_weight = isset($_POST[ Metal_Price_Calculator::META_DIAMOND_WEIGHT ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			? (float) wp_unslash($_POST[ Metal_Price_Calculator::META_DIAMOND_WEIGHT ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			: 0;
+		$gemstone_qty   = isset($_POST[ Metal_Price_Calculator::META_GEMSTONE_QTY ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			? (float) wp_unslash($_POST[ Metal_Price_Calculator::META_GEMSTONE_QTY ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			: 0;
+		$gemstone_rate  = isset($_POST[ Metal_Price_Calculator::META_GEMSTONE_RATE ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			? (float) wp_unslash($_POST[ Metal_Price_Calculator::META_GEMSTONE_RATE ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			: 0;
+		$gold_plating   = isset($_POST[ Metal_Price_Calculator::META_GOLD_PLATING_COST ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			? (float) wp_unslash($_POST[ Metal_Price_Calculator::META_GOLD_PLATING_COST ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			: 0;
+		$rhodium_plating = isset($_POST[ Metal_Price_Calculator::META_RHODIUM_PLATING_COST ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			? (float) wp_unslash($_POST[ Metal_Price_Calculator::META_RHODIUM_PLATING_COST ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			: 0;
+		$misc_cost      = isset($_POST[ Metal_Price_Calculator::META_MISC_COST ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			? (float) wp_unslash($_POST[ Metal_Price_Calculator::META_MISC_COST ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			: 0;
 		$total_weight   = isset($_POST[ Metal_Price_Calculator::META_TOTAL_WEIGHT ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			? (float) wp_unslash($_POST[ Metal_Price_Calculator::META_TOTAL_WEIGHT ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			: 0;
@@ -544,7 +634,7 @@ class Metal_Pricing_Admin
 			return;
 		}
 
-		if (!in_array($charge_type, array(Metal_Price_Calculator::CHARGE_PER_GRAM, Metal_Price_Calculator::CHARGE_PER_PIECE), true)) {
+		if (!$this->calculator->is_valid_charge_type($charge_type)) {
 			$charge_type = Metal_Price_Calculator::CHARGE_PER_GRAM;
 		}
 
@@ -552,6 +642,11 @@ class Metal_Pricing_Admin
 		update_post_meta($post_id, Metal_Price_Calculator::META_GOLD_PURITY, $gold_weight > 0 ? $gold_purity : '');
 		update_post_meta($post_id, Metal_Price_Calculator::META_SILVER_WEIGHT, max(0, $silver_weight));
 		update_post_meta($post_id, Metal_Price_Calculator::META_DIAMOND_WEIGHT, max(0, $diamond_weight));
+		update_post_meta($post_id, Metal_Price_Calculator::META_GEMSTONE_QTY, max(0, $gemstone_qty));
+		update_post_meta($post_id, Metal_Price_Calculator::META_GEMSTONE_RATE, max(0, $gemstone_rate));
+		update_post_meta($post_id, Metal_Price_Calculator::META_GOLD_PLATING_COST, max(0, $gold_plating));
+		update_post_meta($post_id, Metal_Price_Calculator::META_RHODIUM_PLATING_COST, max(0, $rhodium_plating));
+		update_post_meta($post_id, Metal_Price_Calculator::META_MISC_COST, max(0, $misc_cost));
 		update_post_meta($post_id, Metal_Price_Calculator::META_TOTAL_WEIGHT, max(0, $total_weight));
 		update_post_meta($post_id, Metal_Price_Calculator::META_MAKING_CHARGE_TYPE, $charge_type);
 		update_post_meta($post_id, Metal_Price_Calculator::META_MAKING_CHARGE_VALUE, max(0, $charge_val));
@@ -573,7 +668,7 @@ class Metal_Pricing_Admin
 					return;
 				}
 				echo '<div class="notice notice-error"><p>';
-				echo esc_html__('Product not saved: gold purity must be 14K, 18K, 22K, or 24K when gold weight is set.', 'octoways');
+				echo esc_html__('Product not saved: gold purity must be 9K, 14K, 18K, 22K, or 24K when gold weight is set.', 'octoways');
 				echo '</p></div>';
 			}
 		);

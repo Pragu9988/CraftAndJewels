@@ -1,8 +1,28 @@
 # PRD — Dynamic Product Pricing Engine for WooCommerce
 
 **Heritage Craft & Jewels**  
-**Aligned with:** `HC_Jewels_Dynamic_Pricing_Spec_v1.0.docx` (June 2, 2026)  
+**Aligned with:** `HC_Jewels_Dynamic_Pricing_Spec_v1.0.docx` (June 2, 2026) + `Jewellery_Specification_Updated_Professional.pdf` (Spec Update, June 4, 2026)  
+**Version:** v1.1  
 **Status:** Ready for development & QA
+
+---
+
+## Spec Update Addendum (v1.1 — Updated Professional Spec)
+
+The **Updated Professional Spec** (`Jewellery_Specification_Updated_Professional.pdf`) adds the following enhancements on top of Spec v1.0. They are now folded into every relevant section below.
+
+| # | Area | v1.0 Behavior | v1.1 Enhancement |
+|---|------|---------------|-------------------|
+| 1 | **Gold purity** | 14K, 18K, 22K, 24K only | **9K added** — supported set is now **9K, 14K, 18K, 22K, 24K** (9K multiplier = 9 ÷ 24 = 0.3750) |
+| 2 | **Making charge models** | A — Per Gram, B — Per Piece | **C — Percentage** added: `Making Charge = Metal Value × Making Charge %` |
+| 3 | **Cost components** | Gold + Silver + Diamond + Making | **Added** Gemstone Cost, Gold Plating Cost, Rhodium Plating Cost, Miscellaneous Cost |
+| 4 | **Final price formula** | 4 components | **8 components** — `Gold + Silver + Diamond + Making + Gemstone + Gold Plating + Rhodium Plating + Misc` |
+| 5 | **Worked example total** | Rs. 9,981.17 | **Rs. 11,531.17** (+800 gemstone +300 gold plating +250 rhodium +200 misc) |
+
+**Modeling decisions for ambiguous v1.1 items** (documented assumptions, adjust via change request):
+
+- **Gemstone rate is per-product** (`gemstone_rate`), not a single global rate — gemstone types vary (ruby, emerald, sapphire), unlike the global diamond per-carat rate. `gemstone_qty` may represent pieces or carats per the product.
+- **"Metal Value"** in the percentage making charge = **Gold Cost + Silver Cost** (metals only; excludes diamond, gemstone, and plating). Diamond/gemstone are stones and plating/misc are surcharges, not metal value.
 
 ---
 
@@ -104,24 +124,29 @@ Applicable Gold Rate = 24K Gold Rate × (Purity ÷ 24)
 | 22K | 22 ÷ 24 = 0.9167 | Rs. 13,752.35 / g |
 | 18K | 18 ÷ 24 = 0.7500 | Rs. 11,251.92 / g |
 | 14K | 14 ÷ 24 = 0.5833 | Rs. 8,751.49 / g |
+| 9K | 9 ÷ 24 = 0.3750 | Rs. 5,625.96 / g |
 
-**Rule:** Only **14K, 18K, 22K, 24K** are supported. The system **must reject** product saves with any other purity value.
+**Rule (v1.1):** Only **9K, 14K, 18K, 22K, 24K** are supported. The system **must reject** product saves with any other purity value.
 
 ---
 
 ## Making Charge Models
 
-Each dynamic product uses **one** making charge method.
+Each dynamic product uses **one** making charge method. All three methods are supported simultaneously across the catalog.
 
 | Method | Description |
 |--------|-------------|
 | **A — Per Gram** | `Making Charge = Total Product Weight (g) × Making Charge Rate (Rs./g)` |
 | **B — Per Piece** | `Making Charge = Fixed Amount (Rs.)` — independent of weight |
+| **C — Percentage** (v1.1) | `Making Charge = Metal Value × Making Charge % ` — where **Metal Value = Gold Cost + Silver Cost** |
 
 **Examples**
 
 - Per gram: `5.25 g × Rs. 600/g = Rs. 3,150.00`
 - Per piece: Fixed `Rs. 2,000` (e.g. pendant, regardless of weight)
+- Percentage: `Metal Value Rs. 10,000 × 12% = Rs. 1,200.00`
+
+> **Metal Value** (for Method C) = `Gold Cost + Silver Cost` only. Diamond, gemstone, plating, and miscellaneous costs are **excluded** from the percentage base.
 
 ---
 
@@ -133,11 +158,17 @@ Each product declares which materials it contains. Only applicable fields are fi
 
 | Material | Configurable Fields |
 |----------|---------------------|
-| **Gold** | `gold_weight` (g), `gold_purity` (14K \| 18K \| 22K \| 24K) |
+| **Gold** | `gold_weight` (g), `gold_purity` (9K \| 14K \| 18K \| 22K \| 24K) |
 | **Silver** | `silver_weight` (g) |
 | **Diamond** | `diamond_weight` (carat) |
-| **Making** | `making_charge_type` (per_gram \| per_piece), `making_charge_value` (Rs.) |
+| **Gemstone** (v1.1) | `gemstone_qty` (carat or piece), `gemstone_rate` (Rs. per unit — per-product) |
+| **Gold Plating** (v1.1) | `gold_plating_cost` (Rs. fixed) |
+| **Rhodium Plating** (v1.1) | `rhodium_plating_cost` (Rs. fixed) |
+| **Miscellaneous** (v1.1) | `misc_cost` (Rs. fixed) |
+| **Making** | `making_charge_type` (per_gram \| per_piece \| percentage), `making_charge_value` (Rs. or %) |
 | **Weight** | `total_weight` (g) — used for **per-gram** making charge |
+
+> For `making_charge_type = percentage`, `making_charge_value` is interpreted as a **percent** (e.g. `12` = 12%), not a rupee amount.
 
 ### Example Product Configurations
 
@@ -165,36 +196,43 @@ For backward compatibility, existing implementations may map:
 ### Individual Cost Components
 
 ```
-Gold Cost    = gold_weight × (24K Gold Rate × Purity ÷ 24)
-Silver Cost  = silver_weight × Silver Rate
-Diamond Cost = diamond_weight (ct) × Diamond Rate
+Gold Cost           = gold_weight × (24K Gold Rate × Purity ÷ 24)
+Silver Cost         = silver_weight × Silver Rate
+Diamond Cost        = diamond_weight (ct) × Diamond Rate
+Gemstone Cost       = gemstone_qty × gemstone_rate            (v1.1)
+Gold Plating Cost   = gold_plating_cost (fixed)               (v1.1)
+Rhodium Plating Cost= rhodium_plating_cost (fixed)            (v1.1)
+Miscellaneous Cost  = misc_cost (fixed)                       (v1.1)
 ```
 
 **Making Charge**
 
 ```
-If per_gram:  Making Charge = total_weight × making_charge_value
-If per_piece: Making Charge = making_charge_value (fixed)
+If per_gram:    Making Charge = total_weight × making_charge_value
+If per_piece:   Making Charge = making_charge_value (fixed)
+If percentage:  Making Charge = (Gold Cost + Silver Cost) × (making_charge_value ÷ 100)   (v1.1)
 ```
 
 If `making_charge_value` is empty on the product, use global `default_making_charge` when configured.
 
-### Final Product Price
+### Final Product Price (v1.1)
 
 ```
 Final Price = Gold Cost + Silver Cost + Diamond Cost + Making Charge
+            + Gemstone Cost + Gold Plating Cost + Rhodium Plating Cost + Miscellaneous Cost
 ```
 
 - Any material with **zero weight** or **zero rate** contributes **Rs. 0**
 - **Rounding:** intermediate values retain full precision; **final price rounded to 2 decimal places**
 
-### Worked Example — Pendant Set (Spec v1.0)
+### Worked Example — Pendant Set (Updated Spec v1.1)
 
 | Parameter | Value |
 |-----------|-------|
 | Gold Weight / Purity | 0.25 g / 14K |
 | Silver Weight | 5.00 g |
 | Diamond Weight | 0.50 ct |
+| Gemstone | 1 × Rs. 800.00 |
 | Total Weight | 5.25 g |
 | Making | Per gram @ Rs. 600/g |
 | Gold Rate (24K) | Rs. 15,002.56/g |
@@ -207,7 +245,11 @@ Final Price = Gold Cost + Silver Cost + Diamond Cost + Making Charge
 | Silver Cost | 5.00 × 428.66 | 2,143.30 |
 | Diamond Cost | 0.50 × 5,000.00 | 2,500.00 |
 | Making Charge | 5.25 × 600 | 3,150.00 |
-| **FINAL PRICE** | Sum | **9,981.17** |
+| Gemstone Cost | 1 × 800.00 | 800.00 |
+| Gold Plating Cost | Fixed | 300.00 |
+| Rhodium Plating Cost | Fixed | 250.00 |
+| Miscellaneous Cost | Fixed | 200.00 |
+| **FINAL PRICE** | Sum of all components | **11,531.17** |
 
 ### Simple Examples (Silver-Only Legacy)
 
@@ -235,12 +277,17 @@ Final Price = Gold Cost + Silver Cost + Diamond Cost + Making Charge
 | Field Name | Type / Values |
 |------------|---------------|
 | `gold_weight` | Decimal (g) |
-| `gold_purity` | Enum: `14K` \| `18K` \| `22K` \| `24K` |
+| `gold_purity` | Enum: `9K` \| `14K` \| `18K` \| `22K` \| `24K` |
 | `silver_weight` | Decimal (g) |
 | `diamond_weight` | Decimal (carat) |
+| `gemstone_qty` | Decimal (carat or piece) |
+| `gemstone_rate` | Decimal (Rs. per unit, per-product) |
+| `gold_plating_cost` | Decimal (Rs. fixed) |
+| `rhodium_plating_cost` | Decimal (Rs. fixed) |
+| `misc_cost` | Decimal (Rs. fixed) |
 | `total_weight` | Decimal (g) |
-| `making_charge_type` | Enum: `per_gram` \| `per_piece` |
-| `making_charge_value` | Decimal (Rs.) |
+| `making_charge_type` | Enum: `per_gram` \| `per_piece` \| `percentage` |
+| `making_charge_value` | Decimal (Rs. for per_gram/per_piece; % for percentage) |
 
 ### System-Calculated Fields (Read-Only)
 
@@ -249,7 +296,11 @@ Final Price = Gold Cost + Silver Cost + Diamond Cost + Making Charge
 | `gold_cost` | From gold weight × effective gold rate |
 | `silver_cost` | From silver weight × silver rate |
 | `diamond_cost` | From diamond weight × diamond rate |
-| `making_charge_cost` | From making charge type + value + total weight |
+| `gemstone_cost` | From gemstone qty × gemstone rate |
+| `gold_plating_cost_calc` | Fixed gold plating amount |
+| `rhodium_plating_cost_calc` | Fixed rhodium plating amount |
+| `misc_cost_calc` | Fixed miscellaneous amount |
+| `making_charge_cost` | From making charge type + value (+ total weight / metal value) |
 | `final_price` | Sum of all components (authoritative server value) |
 
 ---
@@ -264,7 +315,11 @@ Final Price = Gold Cost + Silver Cost + Diamond Cost + Making Charge
 | 4 | Applicable gold rate is always `current 24K rate × (purity ÷ 24)` |
 | 5 | Final price reflects most recently saved/synced rates (no stale cached authoritative price) |
 | 6 | Zero weight for any material → Rs. 0 for that component |
-| 7 | Product save rejected if `gold_purity` is not 14K, 18K, 22K, or 24K (when gold weight > 0) |
+| 7 | Product save rejected if `gold_purity` is not 9K, 14K, 18K, 22K, or 24K (when gold weight > 0) |
+| 8 | 9K gold rate is `current 24K rate × (9 ÷ 24)` = 0.3750 × 24K rate |
+| 9 | Percentage making charge uses `(gold_cost + silver_cost) × (making_charge_value ÷ 100)` |
+| 10 | Final price includes Gemstone, Gold Plating, Rhodium Plating, and Miscellaneous costs |
+| 11 | Each plating/misc/gemstone field with zero/empty value → Rs. 0 for that component |
 
 ---
 
@@ -364,8 +419,10 @@ After order creation, order pricing **never changes**.
 | `_order_diamond_rate` | Diamond rate at order time (new) |
 | `_order_rate_version` | Audit trail |
 | `_order_weight` / material weights | Snapshot |
-| `_order_making_charge` | Snapshot |
-| `_order_gold_cost`, `_order_silver_cost`, `_order_diamond_cost` | Component breakdown (new) |
+| `_order_making_charge` | Snapshot (incl. type + value/percentage) |
+| `_order_gold_cost`, `_order_silver_cost`, `_order_diamond_cost` | Component breakdown |
+| `_order_gemstone_cost` | Gemstone component snapshot (v1.1) |
+| `_order_gold_plating_cost`, `_order_rhodium_plating_cost`, `_order_misc_cost` | Surcharge component snapshots (v1.1) |
 | `_order_final_price` | Immutable unit/line reference |
 
 ---
@@ -410,9 +467,9 @@ Use `DONOTCACHEPAGE` (or equivalent) for:
 Display **informational** breakdown (server-rendered values; not client-trusted):
 
 - Current material rates (gold 24K effective rate for purity, silver, diamond if applicable)
-- Material weights and purity
-- Per-component costs (gold, silver, diamond)
-- Making charge breakdown
+- Material weights and purity (incl. 9K)
+- Per-component costs (gold, silver, diamond, gemstone, gold plating, rhodium plating, misc)
+- Making charge breakdown (per gram / per piece / percentage)
 - Estimated total
 
 **Disclaimer:**  
@@ -495,7 +552,7 @@ Do not implement without a separate change request:
 Theme classes under `inc/classes/`:
 
 - `class-metal-rate-store.php` — global option store
-- `class-metal-price-calculator.php` — formula engine (extend for multi-material + purity)
+- `class-metal-price-calculator.php` — formula engine (extend for multi-material + purity, incl. 9K, percentage making charge, gemstone/plating/misc components)
 - `class-metal-rate-sync.php` — WP-Cron API sync
 - `class-wc-dynamic-metal-pricing.php` — WooCommerce hooks
 - `class-metal-pricing-admin.php` — admin UI + product fields

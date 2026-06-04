@@ -27,6 +27,10 @@ class WC_Dynamic_Metal_Pricing
 	const ORDER_META_GOLD_COST       = '_order_gold_cost';
 	const ORDER_META_SILVER_COST     = '_order_silver_cost';
 	const ORDER_META_DIAMOND_COST    = '_order_diamond_cost';
+	const ORDER_META_GEMSTONE_COST   = '_order_gemstone_cost';
+	const ORDER_META_GOLD_PLATING    = '_order_gold_plating_cost';
+	const ORDER_META_RHODIUM_PLATING = '_order_rhodium_plating_cost';
+	const ORDER_META_MISC_COST       = '_order_misc_cost';
 	const ORDER_META_FINAL_PRICE     = '_order_final_price';
 	const ORDER_META_GOLD_PURITY     = '_order_gold_purity';
 
@@ -242,14 +246,18 @@ class WC_Dynamic_Metal_Pricing
 			self::CART_META_CALCULATED_PRICE => (float) $breakdown['final_price'],
 			self::CART_META_BREAKDOWN        => wp_json_encode(
 				array(
-					'gold_cost'         => $breakdown['gold_cost'],
-					'silver_cost'       => $breakdown['silver_cost'],
-					'diamond_cost'      => $breakdown['diamond_cost'],
-					'making_charge'     => $breakdown['making_charge'],
-					'gold_purity'       => $breakdown['gold_purity'],
-					'gold_rate_24k'     => $rates['gold_rate_24k'],
-					'silver_rate'       => $rates['silver_rate'],
-					'diamond_rate'      => $rates['diamond_rate'],
+					'gold_cost'            => $breakdown['gold_cost'],
+					'silver_cost'          => $breakdown['silver_cost'],
+					'diamond_cost'         => $breakdown['diamond_cost'],
+					'gemstone_cost'        => $breakdown['gemstone_cost'],
+					'gold_plating_cost'    => $breakdown['gold_plating_cost_calc'],
+					'rhodium_plating_cost' => $breakdown['rhodium_plating_cost_calc'],
+					'misc_cost'            => $breakdown['misc_cost_calc'],
+					'making_charge'        => $breakdown['making_charge'],
+					'gold_purity'          => $breakdown['gold_purity'],
+					'gold_rate_24k'        => $rates['gold_rate_24k'],
+					'silver_rate'          => $rates['silver_rate'],
+					'diamond_rate'         => $rates['diamond_rate'],
 				)
 			),
 		);
@@ -347,6 +355,10 @@ class WC_Dynamic_Metal_Pricing
 		$item->add_meta_data(self::ORDER_META_GOLD_COST, (float) $breakdown['gold_cost'], true);
 		$item->add_meta_data(self::ORDER_META_SILVER_COST, (float) $breakdown['silver_cost'], true);
 		$item->add_meta_data(self::ORDER_META_DIAMOND_COST, (float) $breakdown['diamond_cost'], true);
+		$item->add_meta_data(self::ORDER_META_GEMSTONE_COST, (float) $breakdown['gemstone_cost'], true);
+		$item->add_meta_data(self::ORDER_META_GOLD_PLATING, (float) $breakdown['gold_plating_cost_calc'], true);
+		$item->add_meta_data(self::ORDER_META_RHODIUM_PLATING, (float) $breakdown['rhodium_plating_cost_calc'], true);
+		$item->add_meta_data(self::ORDER_META_MISC_COST, (float) $breakdown['misc_cost_calc'], true);
 		$item->add_meta_data(self::ORDER_META_FINAL_PRICE, (float) $breakdown['final_price'], true);
 
 		if (!empty($breakdown['gold_purity'])) {
@@ -422,9 +434,7 @@ class WC_Dynamic_Metal_Pricing
 			return;
 		}
 
-		$making_label = (Metal_Price_Calculator::CHARGE_PER_GRAM === $breakdown['making_charge_type'])
-			? __('Making charge (per gram)', 'octoways')
-			: __('Making charge (per piece)', 'octoways');
+		$making_label = $this->get_making_charge_label($breakdown['making_charge_type']);
 
 		$guide_page = get_page_by_path('how-pricing-works');
 		$guide_url  = $guide_page ? get_permalink($guide_page) : '';
@@ -453,7 +463,7 @@ class WC_Dynamic_Metal_Pricing
 			</button>
 		</p>
 		<p class="ht-metal-price-hint__disclaimer description">
-			<?php esc_html_e('Based on current gold, silver & diamond rates. May update at checkout.', 'octoways'); ?>
+			<?php esc_html_e('Based on current material rates and product configuration. May update at checkout.', 'octoways'); ?>
 		</p>
 		<?php
 	}
@@ -611,6 +621,41 @@ class WC_Dynamic_Metal_Pricing
 				</li>
 			<?php endif; ?>
 
+			<?php if ($breakdown['gemstone_cost'] > 0) : ?>
+				<li>
+					<span><?php printf(/* translators: 1: qty 2: rate */ esc_html__('Gemstone (%1$s × %2$s)', 'octoways'), esc_html((string) $breakdown['gemstone_qty']), esc_html(number_format($breakdown['gemstone_rate'], 2))); ?></span>
+					<strong><?php echo wp_kses_post(wc_price($breakdown['gemstone_cost'])); ?></strong>
+				</li>
+			<?php endif; ?>
+
+			<?php if ($breakdown['gold_plating_cost_calc'] > 0) : ?>
+				<li>
+					<span><?php esc_html_e('Gold plating', 'octoways'); ?></span>
+					<strong><?php echo wp_kses_post(wc_price($breakdown['gold_plating_cost_calc'])); ?></strong>
+				</li>
+			<?php endif; ?>
+
+			<?php if ($breakdown['rhodium_plating_cost_calc'] > 0) : ?>
+				<li>
+					<span><?php esc_html_e('Rhodium plating', 'octoways'); ?></span>
+					<strong><?php echo wp_kses_post(wc_price($breakdown['rhodium_plating_cost_calc'])); ?></strong>
+				</li>
+			<?php endif; ?>
+
+			<?php if ($breakdown['misc_cost_calc'] > 0) : ?>
+				<li>
+					<span><?php esc_html_e('Miscellaneous', 'octoways'); ?></span>
+					<strong><?php echo wp_kses_post(wc_price($breakdown['misc_cost_calc'])); ?></strong>
+				</li>
+			<?php endif; ?>
+
+			<?php if (Metal_Price_Calculator::CHARGE_PERCENTAGE === $breakdown['making_charge_type'] && $breakdown['metal_value'] > 0) : ?>
+				<li>
+					<span><?php esc_html_e('Metal value (gold + silver)', 'octoways'); ?></span>
+					<strong><?php echo wp_kses_post(wc_price($breakdown['metal_value'])); ?></strong>
+				</li>
+			<?php endif; ?>
+
 			<?php if (Metal_Price_Calculator::CHARGE_PER_GRAM === $breakdown['making_charge_type'] && $breakdown['total_weight'] > 0) : ?>
 				<li>
 					<span><?php esc_html_e('Total weight (making)', 'octoways'); ?></span>
@@ -620,7 +665,15 @@ class WC_Dynamic_Metal_Pricing
 
 			<li>
 				<span><?php echo esc_html($making_label); ?></span>
-				<strong><?php echo wp_kses_post(wc_price($breakdown['making_charge_value'] ?: $this->rate_store->get_rates()['default_making_charge'])); ?></strong>
+				<strong>
+					<?php
+					if (Metal_Price_Calculator::CHARGE_PERCENTAGE === $breakdown['making_charge_type']) {
+						echo esc_html($breakdown['making_charge_value'] . '%');
+					} else {
+						echo wp_kses_post(wc_price($breakdown['making_charge_value'] ?: $this->rate_store->get_rates()['default_making_charge']));
+					}
+					?>
+				</strong>
 			</li>
 			<li>
 				<span><?php esc_html_e('Making charge total', 'octoways'); ?></span>
@@ -632,6 +685,23 @@ class WC_Dynamic_Metal_Pricing
 			</li>
 		</ul>
 		<?php
+	}
+
+	/**
+	 * @param string $charge_type Making charge type.
+	 * @return string
+	 */
+	private function get_making_charge_label($charge_type)
+	{
+		if (Metal_Price_Calculator::CHARGE_PER_GRAM === $charge_type) {
+			return __('Making charge (per gram)', 'octoways');
+		}
+
+		if (Metal_Price_Calculator::CHARGE_PERCENTAGE === $charge_type) {
+			return __('Making charge (percentage)', 'octoways');
+		}
+
+		return __('Making charge (per piece)', 'octoways');
 	}
 
 	/**

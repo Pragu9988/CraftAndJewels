@@ -39,13 +39,18 @@ if (class_exists('\OCTOWAYS_THEME\Inc\Metal_Rate_Store') && class_exists('\OCTOW
 		'default_making_charge' => 0,
 	);
 	$example_formula = array(
-		'gold_weight'         => 0.25,
-		'gold_purity'         => '14K',
-		'silver_weight'       => 5.00,
-		'diamond_weight'      => 0.50,
-		'total_weight'        => 5.25,
-		'making_charge_type'  => \OCTOWAYS_THEME\Inc\Metal_Price_Calculator::CHARGE_PER_GRAM,
-		'making_charge_value' => 600,
+		'gold_weight'           => 0.25,
+		'gold_purity'           => '14K',
+		'silver_weight'         => 5.00,
+		'diamond_weight'        => 0.50,
+		'gemstone_qty'          => 1,
+		'gemstone_rate'         => 800,
+		'gold_plating_cost'     => 300,
+		'rhodium_plating_cost'  => 250,
+		'misc_cost'             => 200,
+		'total_weight'          => 5.25,
+		'making_charge_type'    => \OCTOWAYS_THEME\Inc\Metal_Price_Calculator::CHARGE_PER_GRAM,
+		'making_charge_value'   => 600,
 	);
 	$example = $calculator->calculate_from_formula($example_formula, $example_rates);
 }
@@ -56,7 +61,7 @@ $steps = array(
 		'title' => __('Gold', 'octoways'),
 		'icon'  => 'gold',
 		'formula' => __('Gold Cost = Gold Weight (g) × (24K Rate × Purity ÷ 24)', 'octoways'),
-		'detail'  => __('The gold rate we publish is always 24 karat (24K) per gram. For 14K, 18K, or 22K pieces, we apply the standard purity factor so you only pay for the gold content in your jewellery.', 'octoways'),
+		'detail'  => __('The gold rate we publish is always 24 karat (24K) per gram. For 9K, 14K, 18K, 22K, or 24K pieces, we apply the standard purity factor so you only pay for the gold content in your jewellery.', 'octoways'),
 	),
 	array(
 		'num'   => '02',
@@ -76,10 +81,29 @@ $steps = array(
 		'num'   => '04',
 		'title' => __('Making charge', 'octoways'),
 		'icon'  => 'making',
-		'formula' => __('Per gram: Total Weight × Making Rate  ·  Per piece: Fixed amount', 'octoways'),
-		'detail'  => __('Craftsmanship is charged either per gram of total product weight or as a fixed amount per piece, depending on how the item is configured.', 'octoways'),
+		'formula' => __('Per gram · Per piece · Percentage of gold + silver metal value', 'octoways'),
+		'detail'  => __('Craftsmanship may be charged per gram of total weight, as a fixed amount per piece, or as a percentage of the combined gold and silver metal value.', 'octoways'),
 	),
 );
+
+$extra_steps = array(
+	array(
+		'num'   => '05',
+		'title' => __('Gemstone', 'octoways'),
+		'icon'  => 'gemstone',
+		'formula' => __('Gemstone Cost = Quantity × Rate (per product)', 'octoways'),
+		'detail'  => __('Coloured stones use a per-product rate because types such as ruby, emerald, and sapphire vary in value.', 'octoways'),
+	),
+	array(
+		'num'   => '06',
+		'title' => __('Plating & misc', 'octoways'),
+		'icon'  => 'plating',
+		'formula' => __('Gold plating + Rhodium plating + Miscellaneous (fixed Rs.)', 'octoways'),
+		'detail'  => __('Finishing and other surcharges are fixed amounts configured on each product.', 'octoways'),
+	),
+);
+
+$steps = array_merge($steps, $extra_steps);
 ?>
 
 <section class="ht-pricing-guide" aria-labelledby="ht-pricing-guide-title">
@@ -103,7 +127,7 @@ $steps = array(
 			<div class="ht-pricing-guide__summary-inner">
 				<span class="ht-pricing-guide__summary-label"><?php esc_html_e('Final price', 'octoways'); ?></span>
 				<p class="ht-pricing-guide__summary-formula">
-					<?php esc_html_e('Gold Cost + Silver Cost + Diamond Cost + Making Charge', 'octoways'); ?>
+					<?php esc_html_e('Gold + Silver + Diamond + Making + Gemstone + Gold Plating + Rhodium Plating + Misc', 'octoways'); ?>
 				</p>
 				<p class="ht-pricing-guide__summary-note normal-text">
 					<?php esc_html_e('Any material not used in a product contributes zero to the total. Prices may refresh when market rates change before checkout.', 'octoways'); ?>
@@ -160,7 +184,7 @@ $steps = array(
 			<div class="ht-pricing-guide__purity">
 				<h2 class="ht-pricing-guide__block-title section-title"><?php esc_html_e('Gold purity reference', 'octoways'); ?></h2>
 				<p class="normal-text ht-pricing-guide__purity-intro">
-					<?php esc_html_e('Applicable gold rate per gram = 24K rate × (Purity ÷ 24). Only 14K, 18K, 22K, and 24K are used.', 'octoways'); ?>
+					<?php esc_html_e('Applicable gold rate per gram = 24K rate × (Purity ÷ 24). Supported purities: 9K, 14K, 18K, 22K, and 24K.', 'octoways'); ?>
 				</p>
 				<div class="ht-pricing-guide__table-wrap">
 					<table class="ht-pricing-guide__table">
@@ -193,7 +217,7 @@ $steps = array(
 			<div class="ht-pricing-guide__example">
 				<h2 class="ht-pricing-guide__block-title section-title"><?php esc_html_e('Example: pendant set', 'octoways'); ?></h2>
 				<p class="normal-text ht-pricing-guide__example-intro">
-					<?php esc_html_e('Illustrative configuration — 0.25 g gold (14K), 5 g silver, 0.5 ct diamond, 5.25 g total weight, making charge Rs. 600 per gram.', 'octoways'); ?>
+					<?php esc_html_e('Illustrative pendant set — 0.25 g gold (14K), 5 g silver, 0.5 ct diamond, gemstone Rs. 800, plating Rs. 300 + Rs. 250, misc Rs. 200, making Rs. 600/g on 5.25 g.', 'octoways'); ?>
 				</p>
 				<div class="ht-pricing-guide__table-wrap">
 					<table class="ht-pricing-guide__table ht-pricing-guide__table--example">
@@ -224,6 +248,26 @@ $steps = array(
 								<td><?php esc_html_e('Making charge', 'octoways'); ?></td>
 								<td class="ht-pricing-guide__calc">5.25 × 600</td>
 								<td class="ht-pricing-guide__col-amount"><?php echo esc_html(number_format($example['making_charge'], 2)); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e('Gemstone cost', 'octoways'); ?></td>
+								<td class="ht-pricing-guide__calc">1 × 800.00</td>
+								<td class="ht-pricing-guide__col-amount"><?php echo esc_html(number_format($example['gemstone_cost'], 2)); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e('Gold plating', 'octoways'); ?></td>
+								<td class="ht-pricing-guide__calc"><?php esc_html_e('Fixed', 'octoways'); ?></td>
+								<td class="ht-pricing-guide__col-amount"><?php echo esc_html(number_format($example['gold_plating_cost_calc'], 2)); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e('Rhodium plating', 'octoways'); ?></td>
+								<td class="ht-pricing-guide__calc"><?php esc_html_e('Fixed', 'octoways'); ?></td>
+								<td class="ht-pricing-guide__col-amount"><?php echo esc_html(number_format($example['rhodium_plating_cost_calc'], 2)); ?></td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e('Miscellaneous', 'octoways'); ?></td>
+								<td class="ht-pricing-guide__calc"><?php esc_html_e('Fixed', 'octoways'); ?></td>
+								<td class="ht-pricing-guide__col-amount"><?php echo esc_html(number_format($example['misc_cost_calc'], 2)); ?></td>
 							</tr>
 							<tr class="ht-pricing-guide__row-total">
 								<td colspan="2"><strong><?php esc_html_e('Final price', 'octoways'); ?></strong></td>
