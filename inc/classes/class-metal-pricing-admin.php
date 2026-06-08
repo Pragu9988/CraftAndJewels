@@ -81,7 +81,18 @@ class Metal_Pricing_Admin
 	 */
 	public function enqueue_admin_assets($hook_suffix)
 	{
-		if ('woocommerce_page_ht-metal-rates' !== $hook_suffix) {
+		$is_rates_page  = ('woocommerce_page_ht-metal-rates' === $hook_suffix);
+		$is_product_edit = $this->is_product_edit_screen($hook_suffix);
+
+		if (!$is_rates_page && !$is_product_edit) {
+			return;
+		}
+
+		if ($is_product_edit) {
+			$this->enqueue_product_pricing_admin_assets();
+		}
+
+		if (!$is_rates_page) {
 			return;
 		}
 
@@ -416,7 +427,147 @@ class Metal_Pricing_Admin
 	}
 
 	/**
-	 * Product material fields in General tab.
+	 * @param string $hook_suffix Admin screen hook.
+	 * @return bool
+	 */
+	private function is_product_edit_screen($hook_suffix)
+	{
+		if (!in_array($hook_suffix, array('post.php', 'post-new.php'), true)) {
+			return false;
+		}
+
+		$screen = function_exists('get_current_screen') ? get_current_screen() : null;
+
+		return $screen && 'product' === $screen->post_type;
+	}
+
+	/**
+	 * Styles and behaviour for conditional product pricing fields.
+	 */
+	private function enqueue_product_pricing_admin_assets()
+	{
+		wp_add_inline_style(
+			'woocommerce_admin_styles',
+			'
+			.ht-metal-pricing-fields { border-top: 1px solid #eee; padding-top: 4px; }
+			.ht-metal-pricing-toggles { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 4px 12px 14px; }
+			.ht-metal-pricing-toggles label { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; cursor: pointer; margin: 0; }
+			.ht-metal-pricing-section { display: none; margin: 0; padding: 0; border-top: 1px solid #f0f0f1; }
+			.ht-metal-pricing-section.is-active { display: block; }
+			.ht-metal-pricing-section__title { margin: 0; padding: 10px 12px 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; color: #50575e; }
+			.ht-metal-pricing-section--making { display: block; border-top: 1px solid #dcdcde; margin-top: 8px; }
+			.ht-metal-pricing-section--making .ht-metal-pricing-section__title { color: #1d2327; }
+			.ht-metal-pricing-fields .ht-metal-pricing-field--conditional { display: none; }
+			.ht-metal-pricing-fields .ht-metal-pricing-field--conditional.is-active { display: block; }
+			'
+		);
+
+		wp_enqueue_script('jquery');
+
+		$charge_per_gram   = Metal_Price_Calculator::CHARGE_PER_GRAM;
+		$charge_per_piece  = Metal_Price_Calculator::CHARGE_PER_PIECE;
+		$charge_percentage = Metal_Price_Calculator::CHARGE_PERCENTAGE;
+
+		wp_add_inline_script(
+			'jquery',
+			"(function ($) {
+				function syncMetalPricingFields() {
+					var \$root = $('.ht-metal-pricing-fields');
+					if (!\$root.length) return;
+
+					\$root.find('[data-ht-component]').each(function () {
+						var key = $(this).data('ht-component');
+						var on = \$root.find('[data-ht-toggle=\"' + key + '\"]').is(':checked');
+						$(this).toggleClass('is-active', on);
+					});
+
+					var chargeType = $('#" . esc_js(Metal_Price_Calculator::META_MAKING_CHARGE_TYPE) . "').val();
+					var showWeight = chargeType === '" . esc_js($charge_per_gram) . "';
+					\$root.find('[data-ht-making-field=\"total_weight\"]').toggleClass('is-active', showWeight);
+
+					var \$valueField = $('#" . esc_js(Metal_Price_Calculator::META_MAKING_CHARGE_VALUE) . "').closest('.form-field');
+					var \$valueDesc = \$valueField.find('.description');
+					if (chargeType === '" . esc_js($charge_percentage) . "') {
+						\$valueField.find('label').text('" . esc_js(__('Making charge (%)', 'octoways')) . "');
+						\$valueDesc.text('" . esc_js(__('Percent of gold + silver metal value (e.g. 12 = 12%).', 'octoways')) . "');
+					} else if (chargeType === '" . esc_js($charge_per_piece) . "') {
+						\$valueField.find('label').text('" . esc_js(__('Making charge (NPR per piece)', 'octoways')) . "');
+						\$valueDesc.text('" . esc_js(__('Fixed amount per piece. Overrides global default when set.', 'octoways')) . "');
+					} else {
+						\$valueField.find('label').text('" . esc_js(__('Making charge (NPR per gram)', 'octoways')) . "');
+						\$valueDesc.text('" . esc_js(__('Multiplied by total product weight. Overrides global default when set.', 'octoways')) . "');
+					}
+				}
+
+				$(document).on('change', '.ht-metal-pricing-fields [data-ht-toggle], #" . esc_js(Metal_Price_Calculator::META_MAKING_CHARGE_TYPE) . "', syncMetalPricingFields);
+				$(syncMetalPricingFields);
+			})(jQuery);"
+		);
+	}
+
+	/**
+	 * @param int $post_id Product ID.
+	 * @return array<string, bool>
+	 */
+	private function get_product_component_toggles($post_id)
+	{
+		$gold_weight    = (float) get_post_meta($post_id, Metal_Price_Calculator::META_GOLD_WEIGHT, true);
+		$silver_weight  = (float) get_post_meta($post_id, Metal_Price_Calculator::META_SILVER_WEIGHT, true);
+		$diamond_weight = (float) get_post_meta($post_id, Metal_Price_Calculator::META_DIAMOND_WEIGHT, true);
+		$gemstone_qty   = (float) get_post_meta($post_id, Metal_Price_Calculator::META_GEMSTONE_QTY, true);
+		$gemstone_rate  = (float) get_post_meta($post_id, Metal_Price_Calculator::META_GEMSTONE_RATE, true);
+		$gold_plating   = (float) get_post_meta($post_id, Metal_Price_Calculator::META_GOLD_PLATING_COST, true);
+		$rhodium        = (float) get_post_meta($post_id, Metal_Price_Calculator::META_RHODIUM_PLATING_COST, true);
+		$misc           = (float) get_post_meta($post_id, Metal_Price_Calculator::META_MISC_COST, true);
+
+		return array(
+			'gold'     => $gold_weight > 0,
+			'silver'   => $silver_weight > 0,
+			'diamond'  => $diamond_weight > 0,
+			'gemstone' => ($gemstone_qty > 0) || ($gemstone_rate > 0),
+			'plating'  => ($gold_plating > 0) || ($rhodium > 0) || ($misc > 0),
+		);
+	}
+
+	/**
+	 * @param string $key     Component key.
+	 * @param string $label   Checkbox label.
+	 * @param bool   $checked Initial state.
+	 */
+	private function render_component_toggle($key, $label, $checked)
+	{
+		printf(
+			'<label><input type="checkbox" name="%1$s" value="1" data-ht-toggle="%2$s" %3$s /> %4$s</label>',
+			esc_attr('ht_use_' . $key),
+			esc_attr($key),
+			checked($checked, true, false),
+			esc_html($label)
+		);
+	}
+
+	/**
+	 * @param string $key   Section key.
+	 * @param string $title Section heading.
+	 */
+	private function render_pricing_section_open($key, $title)
+	{
+		printf(
+			'<div class="ht-metal-pricing-section" data-ht-component="%1$s"><p class="ht-metal-pricing-section__title">%2$s</p>',
+			esc_attr($key),
+			esc_html($title)
+		);
+	}
+
+	/**
+	 * Close a pricing section wrapper.
+	 */
+	private function render_pricing_section_close()
+	{
+		echo '</div>';
+	}
+
+	/**
+	 * Product material fields in General tab (progressive disclosure).
 	 */
 	public function render_product_fields()
 	{
@@ -439,15 +590,28 @@ class Metal_Pricing_Admin
 		$charge_type          = get_post_meta($post->ID, Metal_Price_Calculator::META_MAKING_CHARGE_TYPE, true);
 		$charge_val           = get_post_meta($post->ID, Metal_Price_Calculator::META_MAKING_CHARGE_VALUE, true);
 
+		$toggles = $this->get_product_component_toggles($post->ID);
+
 		$purity_options = array('' => __('— Select —', 'octoways'));
 		foreach (array_keys(Metal_Price_Calculator::get_supported_purities()) as $label) {
 			$purity_options[ $label ] = $label;
 		}
 
+		$charge_type = $charge_type ?: Metal_Price_Calculator::CHARGE_PER_GRAM;
+
 		echo '<div class="options_group ht-metal-pricing-fields">';
 		echo '<p class="form-field"><strong>' . esc_html__('Dynamic Material Pricing', 'octoways') . '</strong></p>';
-		echo '<p class="description" style="padding:0 12px 12px;">' . esc_html__('Leave material weights empty (0) when not used. Gold purity required when gold weight is set.', 'octoways') . '</p>';
+		echo '<p class="description" style="padding:0 12px 8px;">' . esc_html__('Choose which materials apply to this product. Only selected sections are shown.', 'octoways') . '</p>';
 
+		echo '<div class="ht-metal-pricing-toggles form-field">';
+		$this->render_component_toggle('gold', __('Gold', 'octoways'), $toggles['gold']);
+		$this->render_component_toggle('silver', __('Silver', 'octoways'), $toggles['silver']);
+		$this->render_component_toggle('diamond', __('Diamond', 'octoways'), $toggles['diamond']);
+		$this->render_component_toggle('gemstone', __('Gemstone', 'octoways'), $toggles['gemstone']);
+		$this->render_component_toggle('plating', __('Plating & misc', 'octoways'), $toggles['plating']);
+		echo '</div>';
+
+		$this->render_pricing_section_open('gold', __('Gold', 'octoways'));
 		woocommerce_wp_text_input(
 			array(
 				'id'                => Metal_Price_Calculator::META_GOLD_WEIGHT,
@@ -457,7 +621,6 @@ class Metal_Pricing_Admin
 				'value'             => $gold_weight,
 			)
 		);
-
 		woocommerce_wp_select(
 			array(
 				'id'      => Metal_Price_Calculator::META_GOLD_PURITY,
@@ -466,7 +629,9 @@ class Metal_Pricing_Admin
 				'value'   => $gold_purity ?: '22K',
 			)
 		);
+		$this->render_pricing_section_close();
 
+		$this->render_pricing_section_open('silver', __('Silver', 'octoways'));
 		woocommerce_wp_text_input(
 			array(
 				'id'                => Metal_Price_Calculator::META_SILVER_WEIGHT,
@@ -476,7 +641,9 @@ class Metal_Pricing_Admin
 				'value'             => $silver_weight,
 			)
 		);
+		$this->render_pricing_section_close();
 
+		$this->render_pricing_section_open('diamond', __('Diamond', 'octoways'));
 		woocommerce_wp_text_input(
 			array(
 				'id'                => Metal_Price_Calculator::META_DIAMOND_WEIGHT,
@@ -486,7 +653,9 @@ class Metal_Pricing_Admin
 				'value'             => $diamond_weight,
 			)
 		);
+		$this->render_pricing_section_close();
 
+		$this->render_pricing_section_open('gemstone', __('Gemstone', 'octoways'));
 		woocommerce_wp_text_input(
 			array(
 				'id'                => Metal_Price_Calculator::META_GEMSTONE_QTY,
@@ -497,7 +666,6 @@ class Metal_Pricing_Admin
 				'description'       => __('Carats or pieces, depending on product.', 'octoways'),
 			)
 		);
-
 		woocommerce_wp_text_input(
 			array(
 				'id'                => Metal_Price_Calculator::META_GEMSTONE_RATE,
@@ -508,7 +676,9 @@ class Metal_Pricing_Admin
 				'description'       => __('Per-product rate (ruby, emerald, sapphire, etc.).', 'octoways'),
 			)
 		);
+		$this->render_pricing_section_close();
 
+		$this->render_pricing_section_open('plating', __('Plating & miscellaneous', 'octoways'));
 		woocommerce_wp_text_input(
 			array(
 				'id'                => Metal_Price_Calculator::META_GOLD_PLATING_COST,
@@ -518,7 +688,6 @@ class Metal_Pricing_Admin
 				'value'             => $gold_plating_cost,
 			)
 		);
-
 		woocommerce_wp_text_input(
 			array(
 				'id'                => Metal_Price_Calculator::META_RHODIUM_PLATING_COST,
@@ -528,7 +697,6 @@ class Metal_Pricing_Admin
 				'value'             => $rhodium_plating_cost,
 			)
 		);
-
 		woocommerce_wp_text_input(
 			array(
 				'id'                => Metal_Price_Calculator::META_MISC_COST,
@@ -538,17 +706,10 @@ class Metal_Pricing_Admin
 				'value'             => $misc_cost,
 			)
 		);
+		$this->render_pricing_section_close();
 
-		woocommerce_wp_text_input(
-			array(
-				'id'                => Metal_Price_Calculator::META_TOTAL_WEIGHT,
-				'label'             => __('Total product weight (g)', 'octoways'),
-				'type'              => 'number',
-				'custom_attributes' => array('step' => '0.01', 'min' => '0'),
-				'value'             => $total_weight,
-				'description'       => __('Used for per-gram making charge.', 'octoways'),
-			)
-		);
+		echo '<div class="ht-metal-pricing-section ht-metal-pricing-section--making is-active">';
+		echo '<p class="ht-metal-pricing-section__title">' . esc_html__('Making charge', 'octoways') . '</p>';
 
 		woocommerce_wp_select(
 			array(
@@ -559,22 +720,47 @@ class Metal_Pricing_Admin
 					Metal_Price_Calculator::CHARGE_PER_PIECE   => __('Per piece', 'octoways'),
 					Metal_Price_Calculator::CHARGE_PERCENTAGE  => __('Percentage of metal value', 'octoways'),
 				),
-				'value'   => $charge_type ?: Metal_Price_Calculator::CHARGE_PER_GRAM,
+				'value'   => $charge_type,
 			)
 		);
+
+		echo '<div class="ht-metal-pricing-field--conditional' . (Metal_Price_Calculator::CHARGE_PER_GRAM === $charge_type ? ' is-active' : '') . '" data-ht-making-field="total_weight">';
+		woocommerce_wp_text_input(
+			array(
+				'id'                => Metal_Price_Calculator::META_TOTAL_WEIGHT,
+				'label'             => __('Total product weight (g)', 'octoways'),
+				'type'              => 'number',
+				'custom_attributes' => array('step' => '0.01', 'min' => '0'),
+				'value'             => $total_weight,
+				'description'       => __('Required for per-gram making charge.', 'octoways'),
+			)
+		);
+		echo '</div>';
 
 		woocommerce_wp_text_input(
 			array(
 				'id'                => Metal_Price_Calculator::META_MAKING_CHARGE_VALUE,
-				'label'             => __('Making charge value', 'octoways'),
+				'label'             => __('Making charge (NPR per gram)', 'octoways'),
 				'type'              => 'number',
 				'custom_attributes' => array('step' => '0.01', 'min' => '0'),
 				'value'             => $charge_val,
-				'description'       => __('NPR per gram or per piece, or percent (e.g. 12) for percentage type. Overrides default when set.', 'octoways'),
+				'description'       => __('Overrides global default when set.', 'octoways'),
 			)
 		);
 
 		echo '</div>';
+		echo '</div>';
+	}
+
+	/**
+	 * @param string $toggle_key Toggle field suffix (gold, silver, …).
+	 * @return bool
+	 */
+	private function is_component_enabled($toggle_key)
+	{
+		$field = 'ht_use_' . $toggle_key;
+
+		return !empty($_POST[ $field ]); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 	}
 
 	/**
@@ -623,6 +809,30 @@ class Metal_Pricing_Admin
 			? (float) wp_unslash($_POST[ Metal_Price_Calculator::META_MAKING_CHARGE_VALUE ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			: 0;
 
+		if (!$this->is_component_enabled('gold')) {
+			$gold_weight = 0;
+			$gold_purity = '';
+		}
+
+		if (!$this->is_component_enabled('silver')) {
+			$silver_weight = 0;
+		}
+
+		if (!$this->is_component_enabled('diamond')) {
+			$diamond_weight = 0;
+		}
+
+		if (!$this->is_component_enabled('gemstone')) {
+			$gemstone_qty  = 0;
+			$gemstone_rate = 0;
+		}
+
+		if (!$this->is_component_enabled('plating')) {
+			$gold_plating    = 0;
+			$rhodium_plating = 0;
+			$misc_cost       = 0;
+		}
+
 		if ($gold_weight > 0 && !$this->calculator->is_valid_gold_purity($gold_purity)) {
 			// Reject invalid purity per spec — do not save gold fields.
 			add_filter(
@@ -636,6 +846,10 @@ class Metal_Pricing_Admin
 
 		if (!$this->calculator->is_valid_charge_type($charge_type)) {
 			$charge_type = Metal_Price_Calculator::CHARGE_PER_GRAM;
+		}
+
+		if (Metal_Price_Calculator::CHARGE_PER_GRAM !== $charge_type) {
+			$total_weight = 0;
 		}
 
 		update_post_meta($post_id, Metal_Price_Calculator::META_GOLD_WEIGHT, max(0, $gold_weight));
