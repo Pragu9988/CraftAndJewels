@@ -56,6 +56,7 @@ class Metal_Pricing_Admin
 
 		add_action('woocommerce_product_options_general_product_data', array($this, 'render_product_fields'));
 		add_action('woocommerce_process_product_meta', array($this, 'save_product_fields'), 10, 1);
+		add_action('wp_ajax_ht_preview_metal_price', array($this, 'ajax_preview_metal_price'));
 		$this->register_admin_notices();
 	}
 
@@ -446,6 +447,8 @@ class Metal_Pricing_Admin
 	 */
 	private function enqueue_product_pricing_admin_assets()
 	{
+		wp_enqueue_style('dashicons');
+
 		wp_add_inline_style(
 			'woocommerce_admin_styles',
 			'
@@ -459,6 +462,29 @@ class Metal_Pricing_Admin
 			.ht-metal-pricing-section--making .ht-metal-pricing-section__title { color: #1d2327; }
 			.ht-metal-pricing-fields .ht-metal-pricing-field--conditional { display: none; }
 			.ht-metal-pricing-fields .ht-metal-pricing-field--conditional.is-active { display: block; }
+			.ht-metal-pricing-preview { margin: 12px; padding: 12px 14px; background: #f0f6fc; border: 1px solid #72aee6; border-radius: 6px; }
+			.ht-metal-pricing-preview.is-empty { background: #f6f7f7; border-color: #dcdcde; }
+			.ht-metal-pricing-preview__head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+			.ht-metal-pricing-preview__label { font-weight: 600; color: #1d2327; }
+			.ht-metal-pricing-preview__total { font-size: 16px; font-weight: 700; font-family: ui-monospace, monospace; color: #135e96; margin-left: auto; }
+			.ht-metal-pricing-preview.is-empty .ht-metal-pricing-preview__total { color: #646970; font-weight: 500; font-size: 13px; }
+			.ht-metal-pricing-preview__info-wrap { position: relative; display: inline-flex; }
+			.ht-metal-pricing-preview__info { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; padding: 0; border: 0; background: transparent; color: #2271b1; cursor: pointer; border-radius: 50%; }
+			.ht-metal-pricing-preview__info:hover, .ht-metal-pricing-preview__info:focus { background: #dbeafe; outline: none; }
+			.ht-metal-pricing-preview__info .dashicons { font-size: 18px; width: 18px; height: 18px; }
+			.ht-metal-pricing-preview__tooltip { display: none; position: absolute; z-index: 100; right: 0; top: calc(100% + 6px); width: min(380px, 92vw); padding: 12px; background: #1d2327; color: #f0f0f1; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,.25); font-size: 12px; line-height: 1.45; text-align: left; }
+			.ht-metal-pricing-preview__tooltip.is-open { display: block; }
+			.ht-metal-pricing-preview__tooltip::before { content: ""; position: absolute; top: -6px; right: 8px; border: 6px solid transparent; border-bottom-color: #1d2327; border-top: 0; }
+			.ht-metal-pricing-preview__tooltip-title { margin: 0 0 8px; font-weight: 600; font-size: 12px; color: #fff; }
+			.ht-metal-pricing-preview__tooltip-table { width: 100%; border-collapse: collapse; margin: 0 0 8px; }
+			.ht-metal-pricing-preview__tooltip-table th, .ht-metal-pricing-preview__tooltip-table td { padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,.12); vertical-align: top; }
+			.ht-metal-pricing-preview__tooltip-table tr:last-child th, .ht-metal-pricing-preview__tooltip-table tr:last-child td { border-bottom: 0; font-weight: 700; color: #fff; }
+			.ht-metal-pricing-preview__tooltip-table th { text-align: left; font-weight: 500; color: #c3c4c7; width: 28%; }
+			.ht-metal-pricing-preview__tooltip-formula { color: #a7aaad; font-family: ui-monospace, monospace; font-size: 11px; }
+			.ht-metal-pricing-preview__tooltip-amount { text-align: right; font-family: ui-monospace, monospace; white-space: nowrap; }
+			.ht-metal-pricing-preview__note { margin: 0; font-size: 11px; color: #646970; }
+			.ht-metal-pricing-preview__tooltip .ht-metal-pricing-preview__note { color: #a7aaad; }
+			.ht-metal-pricing-preview.is-loading .ht-metal-pricing-preview__total { opacity: .5; }
 			'
 		);
 
@@ -468,9 +494,27 @@ class Metal_Pricing_Admin
 		$charge_per_piece  = Metal_Price_Calculator::CHARGE_PER_PIECE;
 		$charge_percentage = Metal_Price_Calculator::CHARGE_PERCENTAGE;
 
+		wp_localize_script(
+			'jquery',
+			'htMetalPricingAdmin',
+			array(
+				'ajaxUrl' => admin_url('admin-ajax.php'),
+				'nonce'   => wp_create_nonce('ht_preview_metal_price'),
+				'i18n'    => array(
+					'empty'    => __('Configure materials to see price', 'octoways'),
+					'error'    => __('Unable to calculate price', 'octoways'),
+					'loading'  => __('Calculating…', 'octoways'),
+					'tooltip'  => __('Price breakdown', 'octoways'),
+					'rateNote' => __('Uses current global material rates. Updates as you edit fields.', 'octoways'),
+				),
+			)
+		);
+
 		wp_add_inline_script(
 			'jquery',
 			"(function ($) {
+				var previewTimer = null;
+
 				function syncMetalPricingFields() {
 					var \$root = $('.ht-metal-pricing-fields');
 					if (!\$root.length) return;
@@ -499,8 +543,79 @@ class Metal_Pricing_Admin
 					}
 				}
 
+				function renderPreviewTooltip(lines, totalFormatted) {
+					if (!lines || !lines.length) {
+						return '<p class=\"ht-metal-pricing-preview__note\">' + htMetalPricingAdmin.i18n.empty + '</p>';
+					}
+					var html = '<p class=\"ht-metal-pricing-preview__tooltip-title\">' + htMetalPricingAdmin.i18n.tooltip + '</p>';
+					html += '<table class=\"ht-metal-pricing-preview__tooltip-table\"><tbody>';
+					lines.forEach(function (line) {
+						html += '<tr><th>' + line.label + '</th><td class=\"ht-metal-pricing-preview__tooltip-formula\">' + line.formula + '</td><td class=\"ht-metal-pricing-preview__tooltip-amount\">' + line.amount + '</td></tr>';
+					});
+					html += '<tr><th>" . esc_js(__('Total', 'octoways')) . "</th><td></td><td class=\"ht-metal-pricing-preview__tooltip-amount\">' + totalFormatted + '</td></tr>';
+					html += '</tbody></table><p class=\"ht-metal-pricing-preview__note\">' + htMetalPricingAdmin.i18n.rateNote + '</p>';
+					return html;
+				}
+
+				function updatePreviewPanel(data) {
+					var \$panel = $('.ht-metal-pricing-preview');
+					if (!\$panel.length) return;
+
+					\$panel.removeClass('is-loading');
+
+					if (!data || !data.success) {
+						\$panel.addClass('is-empty');
+						\$panel.find('.ht-metal-pricing-preview__total').text(htMetalPricingAdmin.i18n.empty);
+						\$panel.find('.ht-metal-pricing-preview__tooltip').html('<p class=\"ht-metal-pricing-preview__note\">' + htMetalPricingAdmin.i18n.empty + '</p>');
+						\$panel.find('.ht-metal-pricing-preview__info-wrap').hide();
+						return;
+					}
+
+					var payload = data.data;
+					\$panel.toggleClass('is-empty', !payload.lines || !payload.lines.length);
+					\$panel.find('.ht-metal-pricing-preview__total').text(payload.total_formatted || htMetalPricingAdmin.i18n.empty);
+					\$panel.find('.ht-metal-pricing-preview__tooltip').html(renderPreviewTooltip(payload.lines, payload.total_formatted));
+					\$panel.find('.ht-metal-pricing-preview__info-wrap').toggle(!!(payload.lines && payload.lines.length));
+				}
+
+				function refreshPricePreview() {
+					var \$root = $('.ht-metal-pricing-fields');
+					var \$panel = $('.ht-metal-pricing-preview');
+					if (!\$root.length || !\$panel.length || typeof htMetalPricingAdmin === 'undefined') return;
+
+					\$panel.addClass('is-loading');
+					\$panel.find('.ht-metal-pricing-preview__total').text(htMetalPricingAdmin.i18n.loading);
+
+					$.post(htMetalPricingAdmin.ajaxUrl, \$root.find(':input').serialize() + '&action=ht_preview_metal_price&nonce=' + encodeURIComponent(htMetalPricingAdmin.nonce))
+						.done(function (response) { updatePreviewPanel(response); })
+						.fail(function () {
+							updatePreviewPanel({ success: false });
+						});
+				}
+
+				function schedulePreview() {
+					clearTimeout(previewTimer);
+					previewTimer = setTimeout(refreshPricePreview, 350);
+				}
+
+				$(document).on('change input', '.ht-metal-pricing-fields :input', function () {
+					syncMetalPricingFields();
+					schedulePreview();
+				});
 				$(document).on('change', '.ht-metal-pricing-fields [data-ht-toggle], #" . esc_js(Metal_Price_Calculator::META_MAKING_CHARGE_TYPE) . "', syncMetalPricingFields);
-				$(syncMetalPricingFields);
+				$(document).on('click', '.ht-metal-pricing-preview__info', function (e) {
+					e.preventDefault();
+					e.stopPropagation();
+					var \$tip = $(this).closest('.ht-metal-pricing-preview__info-wrap').find('.ht-metal-pricing-preview__tooltip');
+					\$tip.toggleClass('is-open');
+				});
+				$(document).on('click', function (e) {
+					if (!$(e.target).closest('.ht-metal-pricing-preview__info-wrap').length) {
+						$('.ht-metal-pricing-preview__tooltip').removeClass('is-open');
+					}
+				});
+
+				syncMetalPricingFields();
 			})(jQuery);"
 		);
 	}
@@ -749,63 +864,347 @@ class Metal_Pricing_Admin
 		);
 
 		echo '</div>';
+
+		$this->render_product_price_preview($post->ID);
+
 		echo '</div>';
 	}
 
 	/**
-	 * @param string $toggle_key Toggle field suffix (gold, silver, …).
-	 * @return bool
+	 * Live calculated price panel for product edit screen.
+	 *
+	 * @param int $post_id Product ID.
 	 */
-	private function is_component_enabled($toggle_key)
+	private function render_product_price_preview($post_id)
 	{
-		$field = 'ht_use_' . $toggle_key;
+		$payload = $this->build_preview_payload_from_product($post_id);
+		$is_empty = empty($payload['lines']);
+		$classes  = 'ht-metal-pricing-preview' . ($is_empty ? ' is-empty' : '');
 
-		return !empty($_POST[ $field ]); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		echo '<div class="' . esc_attr($classes) . '" data-ht-price-preview>';
+		echo '<div class="ht-metal-pricing-preview__head">';
+		echo '<span class="ht-metal-pricing-preview__label">' . esc_html__('Calculated product price', 'octoways') . '</span>';
+
+		if (!$is_empty) {
+			echo '<span class="ht-metal-pricing-preview__info-wrap">';
+			echo '<button type="button" class="ht-metal-pricing-preview__info" aria-label="' . esc_attr__('Show price breakdown', 'octoways') . '" aria-expanded="false">';
+			echo '<span class="dashicons dashicons-info-outline" aria-hidden="true"></span>';
+			echo '</button>';
+			echo '<div class="ht-metal-pricing-preview__tooltip" role="tooltip">';
+			echo wp_kses_post($this->render_preview_tooltip_html($payload));
+			echo '</div>';
+			echo '</span>';
+		}
+
+		echo '<strong class="ht-metal-pricing-preview__total">' . esc_html($payload['total_formatted']) . '</strong>';
+		echo '</div>';
+		echo '<p class="ht-metal-pricing-preview__note">' . esc_html__('Based on current global material rates. Save the product to apply on the storefront.', 'octoways') . '</p>';
+		echo '</div>';
+	}
+
+	/**
+	 * AJAX: recalculate price from unsaved product field values.
+	 */
+	public function ajax_preview_metal_price()
+	{
+		check_ajax_referer('ht_preview_metal_price', 'nonce');
+
+		if (!current_user_can('edit_products') && !current_user_can('manage_woocommerce')) {
+			wp_send_json_error(array('message' => __('Unauthorized', 'octoways')), 403);
+		}
+
+		$formula = $this->parse_product_formula_from_post();
+
+		if (!$formula) {
+			wp_send_json_success($this->empty_preview_payload());
+		}
+
+		$rates     = $this->rate_store->get_rates();
+		$breakdown = $this->calculator->calculate_from_formula($formula, $rates);
+
+		if (!$breakdown || $breakdown['final_price'] <= 0) {
+			wp_send_json_success($this->empty_preview_payload());
+		}
+
+		wp_send_json_success($this->build_preview_payload_from_breakdown($breakdown, $rates));
 	}
 
 	/**
 	 * @param int $post_id Product ID.
+	 * @return array<string, mixed>
 	 */
-	public function save_product_fields($post_id)
+	private function build_preview_payload_from_product($post_id)
 	{
-		if (!current_user_can('edit_post', $post_id)) {
-			return;
+		$breakdown = $this->calculator->get_breakdown_for_product($post_id);
+
+		if (!$breakdown) {
+			return $this->empty_preview_payload();
 		}
 
-		$gold_weight    = isset($_POST[ Metal_Price_Calculator::META_GOLD_WEIGHT ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		return $this->build_preview_payload_from_breakdown($breakdown, $this->rate_store->get_rates());
+	}
+
+	/**
+	 * @return array<string, mixed>
+	 */
+	private function empty_preview_payload()
+	{
+		return array(
+			'total'            => 0,
+			'total_formatted'  => __('Configure materials to see price', 'octoways'),
+			'lines'            => array(),
+			'rate_version'     => $this->rate_store->get_version(),
+		);
+	}
+
+	/**
+	 * @param array<string, mixed> $breakdown Price breakdown.
+	 * @param array<string, mixed> $rates     Global rates.
+	 * @return array<string, mixed>
+	 */
+	private function build_preview_payload_from_breakdown(array $breakdown, array $rates)
+	{
+		$lines = $this->get_breakdown_display_lines($breakdown, $rates);
+
+		return array(
+			'total'           => (float) $breakdown['final_price'],
+			'total_formatted' => $this->format_admin_currency($breakdown['final_price']),
+			'lines'           => $lines,
+			'rate_version'    => (int) $rates['rate_version'],
+		);
+	}
+
+	/**
+	 * @param array<string, mixed> $payload Preview payload.
+	 * @return string
+	 */
+	private function render_preview_tooltip_html(array $payload)
+	{
+		if (empty($payload['lines'])) {
+			return '<p class="ht-metal-pricing-preview__note">' . esc_html__('Configure materials to see price', 'octoways') . '</p>';
+		}
+
+		ob_start();
+		?>
+		<p class="ht-metal-pricing-preview__tooltip-title"><?php esc_html_e('Price breakdown', 'octoways'); ?></p>
+		<table class="ht-metal-pricing-preview__tooltip-table">
+			<tbody>
+				<?php foreach ($payload['lines'] as $line) : ?>
+					<tr>
+						<th><?php echo esc_html($line['label']); ?></th>
+						<td class="ht-metal-pricing-preview__tooltip-formula"><?php echo esc_html($line['formula']); ?></td>
+						<td class="ht-metal-pricing-preview__tooltip-amount"><?php echo esc_html($line['amount']); ?></td>
+					</tr>
+				<?php endforeach; ?>
+				<tr>
+					<th><?php esc_html_e('Total', 'octoways'); ?></th>
+					<td></td>
+					<td class="ht-metal-pricing-preview__tooltip-amount"><?php echo esc_html($payload['total_formatted']); ?></td>
+				</tr>
+			</tbody>
+		</table>
+		<p class="ht-metal-pricing-preview__note"><?php esc_html_e('Uses current global material rates.', 'octoways'); ?></p>
+		<?php
+		return (string) ob_get_clean();
+	}
+
+	/**
+	 * @param array<string, mixed> $breakdown Breakdown from calculator.
+	 * @param array<string, mixed> $rates     Global rates.
+	 * @return array<int, array<string, string>>
+	 */
+	private function get_breakdown_display_lines(array $breakdown, array $rates)
+	{
+		$lines = array();
+
+		if ($breakdown['gold_weight'] > 0 && $breakdown['gold_cost'] > 0) {
+			$lines[] = array(
+				'label'    => __('Gold', 'octoways'),
+				'formula'  => sprintf(
+					/* translators: 1: weight 2: rate 3: purity */
+					__('%1$s g × %2$s/g (%3$s)', 'octoways'),
+					$this->format_admin_number($breakdown['gold_weight']),
+					$this->format_admin_number($breakdown['gold_effective_rate']),
+					$breakdown['gold_purity']
+				),
+				'amount'   => $this->format_admin_currency($breakdown['gold_cost']),
+			);
+		}
+
+		if ($breakdown['silver_weight'] > 0 && $breakdown['silver_cost'] > 0) {
+			$lines[] = array(
+				'label'   => __('Silver', 'octoways'),
+				'formula' => sprintf(
+					/* translators: 1: weight 2: rate */
+					__('%1$s g × %2$s/g', 'octoways'),
+					$this->format_admin_number($breakdown['silver_weight']),
+					$this->format_admin_number($breakdown['silver_rate'])
+				),
+				'amount'  => $this->format_admin_currency($breakdown['silver_cost']),
+			);
+		}
+
+		if ($breakdown['diamond_weight'] > 0 && $breakdown['diamond_cost'] > 0) {
+			$lines[] = array(
+				'label'   => __('Diamond', 'octoways'),
+				'formula' => sprintf(
+					/* translators: 1: carats 2: rate */
+					__('%1$s ct × %2$s/ct', 'octoways'),
+					$this->format_admin_number($breakdown['diamond_weight']),
+					$this->format_admin_number($breakdown['diamond_rate'])
+				),
+				'amount'  => $this->format_admin_currency($breakdown['diamond_cost']),
+			);
+		}
+
+		if ($breakdown['making_charge'] > 0) {
+			$lines[] = array(
+				'label'   => __('Making', 'octoways'),
+				'formula' => $this->get_making_charge_formula_label($breakdown, $rates),
+				'amount'  => $this->format_admin_currency($breakdown['making_charge']),
+			);
+		}
+
+		if ($breakdown['gemstone_cost'] > 0) {
+			$lines[] = array(
+				'label'   => __('Gemstone', 'octoways'),
+				'formula' => sprintf(
+					/* translators: 1: qty 2: rate */
+					__('%1$s × %2$s', 'octoways'),
+					$this->format_admin_number($breakdown['gemstone_qty']),
+					$this->format_admin_currency($breakdown['gemstone_rate'])
+				),
+				'amount'  => $this->format_admin_currency($breakdown['gemstone_cost']),
+			);
+		}
+
+		if ($breakdown['gold_plating_cost_calc'] > 0) {
+			$lines[] = array(
+				'label'   => __('Gold plating', 'octoways'),
+				'formula' => __('Fixed', 'octoways'),
+				'amount'  => $this->format_admin_currency($breakdown['gold_plating_cost_calc']),
+			);
+		}
+
+		if ($breakdown['rhodium_plating_cost_calc'] > 0) {
+			$lines[] = array(
+				'label'   => __('Rhodium plating', 'octoways'),
+				'formula' => __('Fixed', 'octoways'),
+				'amount'  => $this->format_admin_currency($breakdown['rhodium_plating_cost_calc']),
+			);
+		}
+
+		if ($breakdown['misc_cost_calc'] > 0) {
+			$lines[] = array(
+				'label'   => __('Miscellaneous', 'octoways'),
+				'formula' => __('Fixed', 'octoways'),
+				'amount'  => $this->format_admin_currency($breakdown['misc_cost_calc']),
+			);
+		}
+
+		return $lines;
+	}
+
+	/**
+	 * @param array<string, mixed> $breakdown Breakdown.
+	 * @param array<string, mixed> $rates     Global rates.
+	 * @return string
+	 */
+	private function get_making_charge_formula_label(array $breakdown, array $rates)
+	{
+		$type  = $breakdown['making_charge_type'];
+		$value = (float) $breakdown['making_charge_value'];
+
+		if (Metal_Price_Calculator::CHARGE_PERCENTAGE === $type) {
+			return sprintf(
+				/* translators: 1: metal value 2: percent */
+				__('(%1$s metal) × %2$s%%', 'octoways'),
+				$this->format_admin_currency($breakdown['metal_value']),
+				$this->format_admin_number($value)
+			);
+		}
+
+		if (Metal_Price_Calculator::CHARGE_PER_PIECE === $type) {
+			$effective = $value > 0 ? $value : (float) $rates['default_making_charge'];
+
+			return sprintf(
+				/* translators: %s: amount */
+				__('Fixed %s / piece', 'octoways'),
+				$this->format_admin_currency($effective)
+			);
+		}
+
+		$effective = $value > 0 ? $value : (float) $rates['default_making_charge'];
+
+		return sprintf(
+			/* translators: 1: weight 2: rate */
+			__('%1$s g × %2$s/g', 'octoways'),
+			$this->format_admin_number($breakdown['total_weight']),
+			$this->format_admin_currency($effective)
+		);
+	}
+
+	/**
+	 * @param float $amount Amount.
+	 * @return string
+	 */
+	private function format_admin_currency($amount)
+	{
+		return 'Rs. ' . number_format((float) $amount, 2);
+	}
+
+	/**
+	 * @param float $number Number.
+	 * @return string
+	 */
+	private function format_admin_number($number)
+	{
+		$formatted = number_format((float) $number, 2);
+
+		return rtrim(rtrim($formatted, '0'), '.');
+	}
+
+	/**
+	 * Build formula array from current POST (respects component toggles).
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function parse_product_formula_from_post()
+	{
+		$gold_weight     = isset($_POST[ Metal_Price_Calculator::META_GOLD_WEIGHT ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			? (float) wp_unslash($_POST[ Metal_Price_Calculator::META_GOLD_WEIGHT ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			: 0;
-		$gold_purity    = isset($_POST[ Metal_Price_Calculator::META_GOLD_PURITY ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$gold_purity     = isset($_POST[ Metal_Price_Calculator::META_GOLD_PURITY ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			? sanitize_text_field(wp_unslash($_POST[ Metal_Price_Calculator::META_GOLD_PURITY ])) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			: '';
-		$silver_weight  = isset($_POST[ Metal_Price_Calculator::META_SILVER_WEIGHT ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$silver_weight   = isset($_POST[ Metal_Price_Calculator::META_SILVER_WEIGHT ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			? (float) wp_unslash($_POST[ Metal_Price_Calculator::META_SILVER_WEIGHT ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			: 0;
-		$diamond_weight = isset($_POST[ Metal_Price_Calculator::META_DIAMOND_WEIGHT ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$diamond_weight  = isset($_POST[ Metal_Price_Calculator::META_DIAMOND_WEIGHT ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			? (float) wp_unslash($_POST[ Metal_Price_Calculator::META_DIAMOND_WEIGHT ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			: 0;
-		$gemstone_qty   = isset($_POST[ Metal_Price_Calculator::META_GEMSTONE_QTY ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$gemstone_qty    = isset($_POST[ Metal_Price_Calculator::META_GEMSTONE_QTY ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			? (float) wp_unslash($_POST[ Metal_Price_Calculator::META_GEMSTONE_QTY ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			: 0;
-		$gemstone_rate  = isset($_POST[ Metal_Price_Calculator::META_GEMSTONE_RATE ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$gemstone_rate   = isset($_POST[ Metal_Price_Calculator::META_GEMSTONE_RATE ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			? (float) wp_unslash($_POST[ Metal_Price_Calculator::META_GEMSTONE_RATE ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			: 0;
-		$gold_plating   = isset($_POST[ Metal_Price_Calculator::META_GOLD_PLATING_COST ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$gold_plating    = isset($_POST[ Metal_Price_Calculator::META_GOLD_PLATING_COST ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			? (float) wp_unslash($_POST[ Metal_Price_Calculator::META_GOLD_PLATING_COST ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			: 0;
 		$rhodium_plating = isset($_POST[ Metal_Price_Calculator::META_RHODIUM_PLATING_COST ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			? (float) wp_unslash($_POST[ Metal_Price_Calculator::META_RHODIUM_PLATING_COST ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			: 0;
-		$misc_cost      = isset($_POST[ Metal_Price_Calculator::META_MISC_COST ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$misc_cost       = isset($_POST[ Metal_Price_Calculator::META_MISC_COST ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			? (float) wp_unslash($_POST[ Metal_Price_Calculator::META_MISC_COST ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			: 0;
-		$total_weight   = isset($_POST[ Metal_Price_Calculator::META_TOTAL_WEIGHT ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$total_weight    = isset($_POST[ Metal_Price_Calculator::META_TOTAL_WEIGHT ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			? (float) wp_unslash($_POST[ Metal_Price_Calculator::META_TOTAL_WEIGHT ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			: 0;
-		$charge_type    = isset($_POST[ Metal_Price_Calculator::META_MAKING_CHARGE_TYPE ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$charge_type     = isset($_POST[ Metal_Price_Calculator::META_MAKING_CHARGE_TYPE ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			? sanitize_text_field(wp_unslash($_POST[ Metal_Price_Calculator::META_MAKING_CHARGE_TYPE ])) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			: Metal_Price_Calculator::CHARGE_PER_GRAM;
-		$charge_val     = isset($_POST[ Metal_Price_Calculator::META_MAKING_CHARGE_VALUE ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$charge_val      = isset($_POST[ Metal_Price_Calculator::META_MAKING_CHARGE_VALUE ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			? (float) wp_unslash($_POST[ Metal_Price_Calculator::META_MAKING_CHARGE_VALUE ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			: 0;
 
@@ -834,14 +1233,7 @@ class Metal_Pricing_Admin
 		}
 
 		if ($gold_weight > 0 && !$this->calculator->is_valid_gold_purity($gold_purity)) {
-			// Reject invalid purity per spec — do not save gold fields.
-			add_filter(
-				'redirect_post_location',
-				static function ($location) {
-					return add_query_arg('ht_metal_purity_error', '1', $location);
-				}
-			);
-			return;
+			return null;
 		}
 
 		if (!$this->calculator->is_valid_charge_type($charge_type)) {
@@ -852,18 +1244,127 @@ class Metal_Pricing_Admin
 			$total_weight = 0;
 		}
 
-		update_post_meta($post_id, Metal_Price_Calculator::META_GOLD_WEIGHT, max(0, $gold_weight));
-		update_post_meta($post_id, Metal_Price_Calculator::META_GOLD_PURITY, $gold_weight > 0 ? $gold_purity : '');
-		update_post_meta($post_id, Metal_Price_Calculator::META_SILVER_WEIGHT, max(0, $silver_weight));
-		update_post_meta($post_id, Metal_Price_Calculator::META_DIAMOND_WEIGHT, max(0, $diamond_weight));
-		update_post_meta($post_id, Metal_Price_Calculator::META_GEMSTONE_QTY, max(0, $gemstone_qty));
-		update_post_meta($post_id, Metal_Price_Calculator::META_GEMSTONE_RATE, max(0, $gemstone_rate));
-		update_post_meta($post_id, Metal_Price_Calculator::META_GOLD_PLATING_COST, max(0, $gold_plating));
-		update_post_meta($post_id, Metal_Price_Calculator::META_RHODIUM_PLATING_COST, max(0, $rhodium_plating));
-		update_post_meta($post_id, Metal_Price_Calculator::META_MISC_COST, max(0, $misc_cost));
-		update_post_meta($post_id, Metal_Price_Calculator::META_TOTAL_WEIGHT, max(0, $total_weight));
-		update_post_meta($post_id, Metal_Price_Calculator::META_MAKING_CHARGE_TYPE, $charge_type);
-		update_post_meta($post_id, Metal_Price_Calculator::META_MAKING_CHARGE_VALUE, max(0, $charge_val));
+		$has_material = ($gold_weight > 0)
+			|| ($silver_weight > 0)
+			|| ($diamond_weight > 0)
+			|| ($gemstone_qty > 0 && $gemstone_rate > 0)
+			|| ($gold_plating > 0)
+			|| ($rhodium_plating > 0)
+			|| ($misc_cost > 0);
+
+		$rates      = $this->rate_store->get_rates();
+		$has_making = ($charge_val > 0) || ((float) $rates['default_making_charge'] > 0);
+
+		if (!$has_material && !$has_making) {
+			return null;
+		}
+
+		if (Metal_Price_Calculator::CHARGE_PER_GRAM === $charge_type && $has_making && $total_weight <= 0) {
+			if ($charge_val > 0 || (float) $rates['default_making_charge'] > 0) {
+				if (!$has_material) {
+					return null;
+				}
+			}
+		}
+
+		if (!$has_material && Metal_Price_Calculator::CHARGE_PER_PIECE !== $charge_type) {
+			return null;
+		}
+
+		return array(
+			'gold_weight'           => max(0, $gold_weight),
+			'gold_purity'           => $gold_weight > 0 ? $gold_purity : '',
+			'silver_weight'         => max(0, $silver_weight),
+			'diamond_weight'        => max(0, $diamond_weight),
+			'gemstone_qty'          => max(0, $gemstone_qty),
+			'gemstone_rate'         => max(0, $gemstone_rate),
+			'gold_plating_cost'     => max(0, $gold_plating),
+			'rhodium_plating_cost'  => max(0, $rhodium_plating),
+			'misc_cost'             => max(0, $misc_cost),
+			'total_weight'          => max(0, $total_weight),
+			'making_charge_type'    => $charge_type,
+			'making_charge_value'   => max(0, $charge_val),
+		);
+	}
+
+	/**
+	 * @param string $toggle_key Toggle field suffix (gold, silver, …).
+	 * @return bool
+	 */
+	private function is_component_enabled($toggle_key)
+	{
+		$field = 'ht_use_' . $toggle_key;
+
+		return !empty($_POST[ $field ]); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+	}
+
+	/**
+	 * @param int $post_id Product ID.
+	 */
+	public function save_product_fields($post_id)
+	{
+		if (!current_user_can('edit_post', $post_id)) {
+			return;
+		}
+
+		$formula = $this->parse_product_formula_from_post();
+
+		if (null === $formula) {
+			$gold_weight = isset($_POST[ Metal_Price_Calculator::META_GOLD_WEIGHT ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+				? (float) wp_unslash($_POST[ Metal_Price_Calculator::META_GOLD_WEIGHT ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+				: 0;
+			$gold_purity = isset($_POST[ Metal_Price_Calculator::META_GOLD_PURITY ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+				? sanitize_text_field(wp_unslash($_POST[ Metal_Price_Calculator::META_GOLD_PURITY ])) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+				: '';
+
+			if ($gold_weight > 0 && $this->is_component_enabled('gold') && !$this->calculator->is_valid_gold_purity($gold_purity)) {
+				add_filter(
+					'redirect_post_location',
+					static function ($location) {
+						return add_query_arg('ht_metal_purity_error', '1', $location);
+					}
+				);
+				return;
+			}
+
+			$charge_type = isset($_POST[ Metal_Price_Calculator::META_MAKING_CHARGE_TYPE ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+				? sanitize_text_field(wp_unslash($_POST[ Metal_Price_Calculator::META_MAKING_CHARGE_TYPE ])) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+				: Metal_Price_Calculator::CHARGE_PER_GRAM;
+
+			if (!$this->calculator->is_valid_charge_type($charge_type)) {
+				$charge_type = Metal_Price_Calculator::CHARGE_PER_GRAM;
+			}
+
+			$formula = array(
+				'gold_weight'          => 0,
+				'gold_purity'          => '',
+				'silver_weight'        => 0,
+				'diamond_weight'       => 0,
+				'gemstone_qty'         => 0,
+				'gemstone_rate'        => 0,
+				'gold_plating_cost'    => 0,
+				'rhodium_plating_cost' => 0,
+				'misc_cost'            => 0,
+				'total_weight'         => 0,
+				'making_charge_type'   => $charge_type,
+				'making_charge_value'  => isset($_POST[ Metal_Price_Calculator::META_MAKING_CHARGE_VALUE ]) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+					? max(0, (float) wp_unslash($_POST[ Metal_Price_Calculator::META_MAKING_CHARGE_VALUE ])) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+					: 0,
+			);
+		}
+
+		update_post_meta($post_id, Metal_Price_Calculator::META_GOLD_WEIGHT, $formula['gold_weight']);
+		update_post_meta($post_id, Metal_Price_Calculator::META_GOLD_PURITY, $formula['gold_purity']);
+		update_post_meta($post_id, Metal_Price_Calculator::META_SILVER_WEIGHT, $formula['silver_weight']);
+		update_post_meta($post_id, Metal_Price_Calculator::META_DIAMOND_WEIGHT, $formula['diamond_weight']);
+		update_post_meta($post_id, Metal_Price_Calculator::META_GEMSTONE_QTY, $formula['gemstone_qty']);
+		update_post_meta($post_id, Metal_Price_Calculator::META_GEMSTONE_RATE, $formula['gemstone_rate']);
+		update_post_meta($post_id, Metal_Price_Calculator::META_GOLD_PLATING_COST, $formula['gold_plating_cost']);
+		update_post_meta($post_id, Metal_Price_Calculator::META_RHODIUM_PLATING_COST, $formula['rhodium_plating_cost']);
+		update_post_meta($post_id, Metal_Price_Calculator::META_MISC_COST, $formula['misc_cost']);
+		update_post_meta($post_id, Metal_Price_Calculator::META_TOTAL_WEIGHT, $formula['total_weight']);
+		update_post_meta($post_id, Metal_Price_Calculator::META_MAKING_CHARGE_TYPE, $formula['making_charge_type']);
+		update_post_meta($post_id, Metal_Price_Calculator::META_MAKING_CHARGE_VALUE, $formula['making_charge_value']);
 
 		// Remove deprecated v1 meta.
 		delete_post_meta($post_id, '_metal_type');
