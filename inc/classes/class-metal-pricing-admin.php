@@ -126,6 +126,9 @@ class Metal_Pricing_Admin
 			.ht-pricing-formula-live dl { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 12px; }
 			.ht-pricing-formula-live dt { color: #646970; }
 			.ht-pricing-formula-live dd { margin: 0; font-weight: 600; font-family: ui-monospace, monospace; text-align: right; }
+			.ht-pricing-mode { display: inline-block; padding: 2px 10px; border-radius: 4px; font-size: 12px; }
+			.ht-pricing-mode--manual { background: #fcf0e3; color: #9a6700; }
+			.ht-pricing-mode--api { background: #e7f5e8; color: #007017; }
 			'
 		);
 	}
@@ -272,6 +275,7 @@ class Metal_Pricing_Admin
 		}
 
 		$rates = $this->rate_store->get_rates();
+		$api_sync_enabled = !empty($rates['api_sync_enabled']);
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e('Dynamic Pricing — Material Rates', 'octoways'); ?></h1>
@@ -294,6 +298,12 @@ class Metal_Pricing_Admin
 				</div>
 			<?php endif; ?>
 
+			<?php if (isset($_GET['sync_disabled'])) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
+				<div class="notice notice-warning is-dismissible">
+					<p><?php esc_html_e('API sync is disabled while manual pricing mode is active. Enable automatic API sync to fetch live rates.', 'octoways'); ?></p>
+				</div>
+			<?php endif; ?>
+
 			<div class="ht-pricing-admin-layout">
 				<div class="ht-pricing-admin-layout__main">
 			<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
@@ -301,6 +311,24 @@ class Metal_Pricing_Admin
 				<input type="hidden" name="action" value="ht_metal_rates_save" />
 
 				<table class="form-table" role="presentation">
+					<tr>
+						<th scope="row"><?php esc_html_e('Pricing mode', 'octoways'); ?></th>
+						<td>
+							<fieldset>
+								<label for="ht_api_sync_enabled">
+									<input type="checkbox" id="ht_api_sync_enabled" name="ht_api_sync_enabled" value="1" <?php checked($api_sync_enabled); ?> />
+									<?php esc_html_e('Enable automatic API sync (gold & silver)', 'octoways'); ?>
+								</label>
+								<p class="description">
+									<?php if ($api_sync_enabled) : ?>
+										<?php esc_html_e('Live Nepal market rates update gold and silver every 5 minutes. Manual values below may be overwritten on the next sync.', 'octoways'); ?>
+									<?php else : ?>
+										<?php esc_html_e('Manual mode — gold and silver rates below are locked until you turn API sync back on. Cron and background sync will not change them.', 'octoways'); ?>
+									<?php endif; ?>
+								</p>
+							</fieldset>
+						</td>
+					</tr>
 					<tr>
 						<th scope="row">
 							<label for="ht_gold_rate_24k"><?php esc_html_e('Gold rate (24K) per gram (NPR)', 'octoways'); ?></label>
@@ -354,7 +382,19 @@ class Metal_Pricing_Admin
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><?php esc_html_e('Source', 'octoways'); ?></th>
+						<th scope="row"><?php esc_html_e('Active mode', 'octoways'); ?></th>
+						<td>
+							<?php if ($api_sync_enabled) : ?>
+								<span class="ht-pricing-mode ht-pricing-mode--api"><strong><?php esc_html_e('API', 'octoways'); ?></strong></span>
+								<p class="description"><?php esc_html_e('Gold and silver follow the live API when sync runs.', 'octoways'); ?></p>
+							<?php else : ?>
+								<span class="ht-pricing-mode ht-pricing-mode--manual"><strong><?php esc_html_e('Manual', 'octoways'); ?></strong></span>
+								<p class="description"><?php esc_html_e('Gold and silver use the saved values below.', 'octoways'); ?></p>
+							<?php endif; ?>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e('Last update source', 'octoways'); ?></th>
 						<td><code><?php echo esc_html((string) $rates['rate_source']); ?></code></td>
 					</tr>
 				</table>
@@ -367,11 +407,23 @@ class Metal_Pricing_Admin
 			<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
 				<?php wp_nonce_field('ht_metal_rates_sync', 'ht_metal_rates_sync_nonce'); ?>
 				<input type="hidden" name="action" value="ht_metal_rates_sync" />
-				<?php submit_button(__('Sync gold & silver from API', 'octoways'), 'secondary'); ?>
+				<?php
+				submit_button(
+					__('Sync gold & silver from API now', 'octoways'),
+					'secondary',
+					'submit',
+					true,
+					$api_sync_enabled ? array() : array('disabled' => 'disabled')
+				);
+				?>
 			</form>
 
 			<p class="description">
-				<?php esc_html_e('Rates sync automatically every 5 minutes (gold 24K and silver). Updating rates increments the version and refreshes all dynamic product prices instantly.', 'octoways'); ?>
+				<?php if ($api_sync_enabled) : ?>
+					<?php esc_html_e('Rates sync automatically every 5 minutes (gold 24K and silver). Updating rates increments the version and refreshes all dynamic product prices instantly.', 'octoways'); ?>
+				<?php else : ?>
+					<?php esc_html_e('Automatic API sync is off. Save manual rates above or enable API sync to resume live market updates.', 'octoways'); ?>
+				<?php endif; ?>
 			</p>
 				</div>
 
@@ -398,12 +450,17 @@ class Metal_Pricing_Admin
 				'silver_rate'           => isset($_POST['ht_silver_rate']) ? (float) wp_unslash($_POST['ht_silver_rate']) : 0, // phpcs:ignore WordPress.Security.NonceVerification.Missing
 				'diamond_rate'          => isset($_POST['ht_diamond_rate']) ? (float) wp_unslash($_POST['ht_diamond_rate']) : 0, // phpcs:ignore WordPress.Security.NonceVerification.Missing
 				'default_making_charge' => isset($_POST['ht_default_making_charge']) ? (float) wp_unslash($_POST['ht_default_making_charge']) : 0, // phpcs:ignore WordPress.Security.NonceVerification.Missing
+				'api_sync_enabled'      => !empty($_POST['ht_api_sync_enabled']), // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			),
 			Metal_Rate_Store::SOURCE_MANUAL,
 			true
 		);
 
-		Metal_Rate_Store::log('manual_update', 'Material rates updated manually from admin.');
+		Metal_Rate_Store::log(
+			'manual_update',
+			'Material rates updated manually from admin.',
+			array('api_sync_enabled' => !empty($_POST['ht_api_sync_enabled'])) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		);
 
 		wp_safe_redirect(add_query_arg('updated', '1', admin_url('admin.php?page=ht-metal-rates')));
 		exit;
@@ -419,6 +476,11 @@ class Metal_Pricing_Admin
 		}
 
 		check_admin_referer('ht_metal_rates_sync', 'ht_metal_rates_sync_nonce');
+
+		if (!$this->rate_store->is_api_sync_enabled()) {
+			wp_safe_redirect(add_query_arg('sync_disabled', '1', admin_url('admin.php?page=ht-metal-rates')));
+			exit;
+		}
 
 		$success = $this->rate_sync->run_sync(true);
 		$arg     = $success ? 'synced' : 'sync_failed';

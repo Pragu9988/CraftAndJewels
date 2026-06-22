@@ -36,6 +36,7 @@ class Metal_Rate_Store
 			'last_synced_at'         => '',
 			'rate_version'           => 0,
 			'rate_source'            => self::SOURCE_MANUAL,
+			'api_sync_enabled'       => true,
 		);
 	}
 
@@ -58,7 +59,26 @@ class Metal_Rate_Store
 			$stored['silver_rate'] = $stored['silver_rate_per_gram'];
 		}
 
-		return wp_parse_args($stored, self::get_defaults());
+		$merged = wp_parse_args($stored, self::get_defaults());
+
+		// Legacy installs: infer toggle from last rate source until explicitly saved.
+		if (!array_key_exists('api_sync_enabled', $stored)) {
+			$merged['api_sync_enabled'] = (self::SOURCE_API === $merged['rate_source']);
+		}
+
+		$merged['api_sync_enabled'] = (bool) $merged['api_sync_enabled'];
+
+		return $merged;
+	}
+
+	/**
+	 * Whether cron, visitor fallback, and admin API sync may update gold/silver rates.
+	 *
+	 * @return bool
+	 */
+	public function is_api_sync_enabled()
+	{
+		return (bool) $this->get_rates()['api_sync_enabled'];
 	}
 
 	/**
@@ -104,6 +124,9 @@ class Metal_Rate_Store
 			'rate_source'           => in_array($source, array(self::SOURCE_MANUAL, self::SOURCE_API), true)
 				? $source
 				: self::SOURCE_MANUAL,
+			'api_sync_enabled'      => array_key_exists('api_sync_enabled', $rates)
+				? (bool) $rates['api_sync_enabled']
+				: (bool) $current['api_sync_enabled'],
 		);
 
 		update_option(self::OPTION_KEY, $data, false);
@@ -123,8 +146,9 @@ class Metal_Rate_Store
 	{
 		return $this->update_rates(
 			array(
-				'gold_rate_24k' => $gold_rate_24k,
-				'silver_rate'   => $silver_rate,
+				'gold_rate_24k'    => $gold_rate_24k,
+				'silver_rate'      => $silver_rate,
+				'api_sync_enabled' => true,
 			),
 			$source,
 			true

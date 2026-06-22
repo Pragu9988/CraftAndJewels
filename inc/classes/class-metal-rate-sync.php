@@ -95,6 +95,16 @@ class Metal_Rate_Sync
 	 */
 	public function run_sync($manual = false)
 	{
+		if (!$this->rate_store->is_api_sync_enabled()) {
+			Metal_Rate_Store::log(
+				'sync_skipped',
+				'API sync skipped — manual pricing mode is active.',
+				array('manual' => $manual)
+			);
+
+			return false;
+		}
+
 		$api_url = apply_filters(
 			'ht_metal_rates_api_url',
 			'https://gold-silver.sabinmagar.com.np/wp-json/v1/metal-prices/'
