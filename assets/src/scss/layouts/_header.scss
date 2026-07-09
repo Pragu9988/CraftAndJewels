@@ -382,18 +382,55 @@
     }
 
     &__wrapper {
-        display: flex;
-        justify-content: center;
-        text-align: center;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: 16px;
+    }
+
+    &__currency {
+        grid-column: 3;
+        justify-self: end;
+    }
+
+    &__currency .ht-currency-switcher {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.55);
+        border-radius: 4px;
+        color: #ffffff;
+        font-size: 12px;
+        line-height: 1.4;
+        padding: 4px 28px 4px 10px;
+        cursor: pointer;
+        min-width: 96px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1L5 5L9 1' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 8px center;
+        background-size: 10px 6px;
+    }
+
+    &__currency .ht-currency-switcher option {
+        color: #1d2327;
+        background: #ffffff;
+    }
+
+    &__currency .ht-currency-switcher:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
     }
 
     &__text {
+        grid-column: 2;
+        justify-self: center;
         margin: 0;
         letter-spacing: 0.02em;
-        font-weight: 400;
-        color: #ffffff;
         font-weight: 500;
+        color: #ffffff;
         font-size: var(--fs-300);
+        text-align: center;
     }
 
 

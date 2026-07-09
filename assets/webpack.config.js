@@ -17,6 +17,7 @@ const entry = {
     floating: JS_DIR + "/floating.js",
     checkoutPaymentProof: JS_DIR + "/checkout-payment-proof.js",
     metalPricingBreakdown: JS_DIR + "/metal-pricing-breakdown.js",
+    currencySwitcher: JS_DIR + "/currency-switcher.js",
 };
 
 const output = {
