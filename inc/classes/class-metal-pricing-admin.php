@@ -898,7 +898,10 @@ class Metal_Pricing_Admin
 					}
 				});
 
-				syncMetalPricingFields();
+				$(function () {
+					syncMetalPricingFields();
+					schedulePreview();
+				});
 			})(jQuery);"
 		);
 	}
@@ -947,10 +950,16 @@ class Metal_Pricing_Admin
 	 * @param string $key   Section key.
 	 * @param string $title Section heading.
 	 */
-	private function render_pricing_section_open($key, $title)
+	private function render_pricing_section_open($key, $title, $active = false)
 	{
+		$classes = 'ht-metal-pricing-section';
+		if ($active) {
+			$classes .= ' is-active';
+		}
+
 		printf(
-			'<div class="ht-metal-pricing-section" data-ht-component="%1$s"><p class="ht-metal-pricing-section__title">%2$s</p>',
+			'<div class="%1$s" data-ht-component="%2$s"><p class="ht-metal-pricing-section__title">%3$s</p>',
+			esc_attr($classes),
 			esc_attr($key),
 			esc_html($title)
 		);
@@ -1009,7 +1018,7 @@ class Metal_Pricing_Admin
 		$this->render_component_toggle('plating', __('Plating & misc', 'octoways'), $toggles['plating']);
 		echo '</div>';
 
-		$this->render_pricing_section_open('gold', __('Gold', 'octoways'));
+		$this->render_pricing_section_open('gold', __('Gold', 'octoways'), $toggles['gold']);
 		woocommerce_wp_text_input(
 			array(
 				'id'                => Metal_Price_Calculator::META_GOLD_WEIGHT,
@@ -1029,7 +1038,7 @@ class Metal_Pricing_Admin
 		);
 		$this->render_pricing_section_close();
 
-		$this->render_pricing_section_open('silver', __('Silver', 'octoways'));
+		$this->render_pricing_section_open('silver', __('Silver', 'octoways'), $toggles['silver']);
 		woocommerce_wp_text_input(
 			array(
 				'id'                => Metal_Price_Calculator::META_SILVER_WEIGHT,
@@ -1041,7 +1050,7 @@ class Metal_Pricing_Admin
 		);
 		$this->render_pricing_section_close();
 
-		$this->render_pricing_section_open('diamond', __('Diamond', 'octoways'));
+		$this->render_pricing_section_open('diamond', __('Diamond', 'octoways'), $toggles['diamond']);
 		woocommerce_wp_text_input(
 			array(
 				'id'                => Metal_Price_Calculator::META_DIAMOND_WEIGHT,
@@ -1053,7 +1062,7 @@ class Metal_Pricing_Admin
 		);
 		$this->render_pricing_section_close();
 
-		$this->render_pricing_section_open('gemstone', __('Gemstone', 'octoways'));
+		$this->render_pricing_section_open('gemstone', __('Gemstone', 'octoways'), $toggles['gemstone']);
 		woocommerce_wp_text_input(
 			array(
 				'id'                => Metal_Price_Calculator::META_GEMSTONE_QTY,
@@ -1076,7 +1085,7 @@ class Metal_Pricing_Admin
 		);
 		$this->render_pricing_section_close();
 
-		$this->render_pricing_section_open('plating', __('Plating & miscellaneous', 'octoways'));
+		$this->render_pricing_section_open('plating', __('Plating & miscellaneous', 'octoways'), $toggles['plating']);
 		woocommerce_wp_text_input(
 			array(
 				'id'                => Metal_Price_Calculator::META_GOLD_PLATING_COST,

@@ -49,7 +49,7 @@ class Currency_Context
 	 */
 	public function register()
 	{
-		add_action('init', array($this, 'maybe_switch_currency_from_request'), 1);
+		add_action('template_redirect', array($this, 'maybe_switch_currency_from_request'), 1);
 		add_action('woocommerce_init', array($this, 'bootstrap_from_cookie'), 5);
 	}
 
@@ -81,8 +81,21 @@ class Currency_Context
 			}
 		}
 
-		if ($this->is_valid_currency($currency)) {
+		$previous = $this->get_cookie_currency() ?: $this->get_session_currency() ?: self::CURRENCY_NPR;
+
+		if ($this->is_valid_currency($currency) && $currency !== $previous) {
 			$this->set_currency($currency);
+
+			if (
+				function_exists('wc_add_notice')
+				&& $this->can_recalculate_cart()
+				&& !WC()->cart->is_empty()
+			) {
+				wc_add_notice(
+					__('Display currency updated. Your cart totals have been recalculated.', 'octoways'),
+					'notice'
+				);
+			}
 		}
 
 		$redirect = remove_query_arg(array('ht_currency', '_wpnonce'));
@@ -171,16 +184,30 @@ class Currency_Context
 		$this->resolved_currency = $currency;
 		$this->set_cookie($currency);
 
-		if ($this->ensure_woocommerce_session()) {
+		if ($this->ensure_woocommerce_session(false)) {
 			WC()->session->set(self::SESSION_KEY, $currency);
-			$this->persist_session();
 		}
 
-		if (function_exists('WC') && WC()->cart) {
+		// Only touch cart after WooCommerce has restored it from session.
+		if ($this->can_recalculate_cart()) {
 			WC()->cart->calculate_totals();
 		}
 
 		return true;
+	}
+
+	/**
+	 * Whether the cart is safe to recalculate without wiping session data.
+	 *
+	 * @return bool
+	 */
+	private function can_recalculate_cart()
+	{
+		if (!function_exists('WC') || !WC()->cart) {
+			return false;
+		}
+
+		return (bool) did_action('woocommerce_cart_loaded_from_session');
 	}
 
 	/**
@@ -229,9 +256,10 @@ class Currency_Context
 	}
 
 	/**
+	 * @param bool $load_cart Whether to force-load the cart object.
 	 * @return bool
 	 */
-	private function ensure_woocommerce_session()
+	private function ensure_woocommerce_session($load_cart = true)
 	{
 		if (!function_exists('WC') || !class_exists('WooCommerce')) {
 			return false;
@@ -241,25 +269,11 @@ class Currency_Context
 			WC()->initialize_session();
 		}
 
-		if (null === WC()->cart && function_exists('wc_load_cart')) {
+		if ($load_cart && null === WC()->cart && function_exists('wc_load_cart')) {
 			wc_load_cart();
 		}
 
 		return null !== WC()->session;
-	}
-
-	/**
-	 * Persist session immediately.
-	 */
-	private function persist_session()
-	{
-		if (!function_exists('WC') || !WC()->session) {
-			return;
-		}
-
-		if (method_exists(WC()->session, 'save_data')) {
-			WC()->session->save_data();
-		}
 	}
 
 	/**
