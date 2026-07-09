@@ -19,6 +19,9 @@ class Metal_Rate_Store
 	const SOURCE_MANUAL = 'manual';
 	const SOURCE_API    = 'api';
 
+	const FX_SOURCE_MANUAL = 'manual';
+	const FX_SOURCE_API    = 'api';
+
 	const LOG_SOURCE = 'ht-metal-pricing';
 
 	/**
@@ -37,6 +40,11 @@ class Metal_Rate_Store
 			'rate_version'           => 0,
 			'rate_source'            => self::SOURCE_MANUAL,
 			'api_sync_enabled'       => true,
+			'npr_per_usd'            => 0.0,
+			'fx_api_sync_enabled'    => false,
+			'fx_rate_source'         => self::FX_SOURCE_MANUAL,
+			'fx_last_synced_at'      => '',
+			'fx_rate_version'        => 0,
 		);
 	}
 
@@ -68,6 +76,14 @@ class Metal_Rate_Store
 
 		$merged['api_sync_enabled'] = (bool) $merged['api_sync_enabled'];
 
+		if (!array_key_exists('fx_api_sync_enabled', $stored)) {
+			$merged['fx_api_sync_enabled'] = false;
+		}
+
+		$merged['fx_api_sync_enabled'] = (bool) $merged['fx_api_sync_enabled'];
+		$merged['npr_per_usd']         = max(0, (float) $merged['npr_per_usd']);
+		$merged['fx_rate_version']     = (int) $merged['fx_rate_version'];
+
 		return $merged;
 	}
 
@@ -79,6 +95,32 @@ class Metal_Rate_Store
 	public function is_api_sync_enabled()
 	{
 		return (bool) $this->get_rates()['api_sync_enabled'];
+	}
+
+	/**
+	 * Whether cron and admin FX sync may update NPR/USD rate.
+	 *
+	 * @return bool
+	 */
+	public function is_fx_api_sync_enabled()
+	{
+		return (bool) $this->get_rates()['fx_api_sync_enabled'];
+	}
+
+	/**
+	 * @return float NPR per 1 USD.
+	 */
+	public function get_npr_per_usd()
+	{
+		return max(0, (float) $this->get_rates()['npr_per_usd']);
+	}
+
+	/**
+	 * @return int
+	 */
+	public function get_fx_version()
+	{
+		return (int) $this->get_rates()['fx_rate_version'];
 	}
 
 	/**
@@ -127,11 +169,70 @@ class Metal_Rate_Store
 			'api_sync_enabled'      => array_key_exists('api_sync_enabled', $rates)
 				? (bool) $rates['api_sync_enabled']
 				: (bool) $current['api_sync_enabled'],
+			'npr_per_usd'           => array_key_exists('npr_per_usd', $rates)
+				? max(0, (float) $rates['npr_per_usd'])
+				: (float) $current['npr_per_usd'],
+			'fx_api_sync_enabled'   => array_key_exists('fx_api_sync_enabled', $rates)
+				? (bool) $rates['fx_api_sync_enabled']
+				: (bool) $current['fx_api_sync_enabled'],
+			'fx_rate_source'        => isset($rates['fx_rate_source'])
+				&& in_array($rates['fx_rate_source'], array(self::FX_SOURCE_MANUAL, self::FX_SOURCE_API), true)
+				? $rates['fx_rate_source']
+				: (string) $current['fx_rate_source'],
+			'fx_last_synced_at'     => array_key_exists('fx_last_synced_at', $rates)
+				? (string) $rates['fx_last_synced_at']
+				: (string) $current['fx_last_synced_at'],
+			'fx_rate_version'       => array_key_exists('fx_rate_version', $rates)
+				? (int) $rates['fx_rate_version']
+				: (int) $current['fx_rate_version'],
 		);
 
 		update_option(self::OPTION_KEY, $data, false);
 
 		return $data;
+	}
+
+	/**
+	 * Update FX rate and bump fx_rate_version.
+	 *
+	 * @param float  $npr_per_usd NPR per 1 USD.
+	 * @param string $source      manual|api.
+	 * @param bool   $increment   Whether to increment fx_rate_version.
+	 * @return array<string, mixed>
+	 */
+	public function update_fx_rates($npr_per_usd, $source = self::FX_SOURCE_MANUAL, $increment = true)
+	{
+		$current = $this->get_rates();
+		$version = (int) $current['fx_rate_version'];
+
+		if ($increment) {
+			++$version;
+		}
+
+		return $this->update_rates(
+			array(
+				'npr_per_usd'       => max(0, (float) $npr_per_usd),
+				'fx_rate_source'    => in_array($source, array(self::FX_SOURCE_MANUAL, self::FX_SOURCE_API), true)
+					? $source
+					: self::FX_SOURCE_MANUAL,
+				'fx_last_synced_at' => gmdate('Y-m-d H:i:s'),
+				'fx_rate_version'   => $version,
+			),
+			$current['rate_source'],
+			false
+		);
+	}
+
+	/**
+	 * API sync: update NPR/USD rate only.
+	 *
+	 * @param float  $npr_per_usd NPR per 1 USD.
+	 * @param string $source      Rate source.
+	 * @return array<string, mixed>
+	 */
+	public function update_fx_from_api($npr_per_usd, $source = self::FX_SOURCE_API)
+	{
+		return $this->update_fx_rates($npr_per_usd, $source, true);
 	}
 
 	/**

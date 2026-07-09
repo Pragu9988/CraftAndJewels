@@ -41,7 +41,7 @@ The following differences and enhancements were introduced in **HC_Jewels_Dynami
 | **Global rates** | Gold + silver per gram | Gold **(24K)** + silver + **diamond per carat** + optional **default making charge** |
 | **Product overrides** | Per-product making charge only | Per-product making charge **overrides** global default making charge |
 | **Computed fields** | Runtime price only | Read-only breakdown: `gold_cost`, `silver_cost`, `diamond_cost`, `making_charge_cost`, `final_price` |
-| **Tax / currency** | GST/VAT listed as future | **Explicitly out of scope** in v1.0 (NPR only, no tax in formula) |
+| **Tax / currency** | GST/VAT listed as future | **v1.0:** NPR only, no tax in formula. **v1.2:** NPR/USD display + checkout switcher with FX rate (manual or API) |
 | **Rate history UI** | Optional low-priority feature | **Out of scope** in spec v1.0 (order snapshots remain for checkout audit) |
 | **Customer display** | Required product breakdown | Spec v1.0: backend calculation focus; **storefront breakdown retained** as UX layer (non-authoritative) |
 | **API / bulk import** | Nepal API auto-sync (5 min) | Spec: bulk CSV/API **out of scope**; **operational API sync retained** as extended requirement for live Nepal market rates |
@@ -493,7 +493,6 @@ Prices are based on live material rates and may update during checkout.
 Do not implement without a separate change request:
 
 - Tax / VAT in final price formula
-- Currency conversion (NPR only)
 - Admin price history graph / rate change audit UI
 - Bulk rate import via CSV
 - Customer-facing **rate ticker** as a standalone feature (breakdown on product page is in scope as UX, not a market data feed)
@@ -507,7 +506,7 @@ Do not implement without a separate change request:
 | Wastage % | Medium |
 | Stone pricing beyond diamond carat model | Medium |
 | Temporary checkout rate lock | Medium |
-| Multi-currency | Low |
+| Multi-currency (NPR + USD) | Implemented (v1.2) |
 | Live websocket pricing | Low |
 | Full rate history graph (admin) | Low |
 

@@ -34,6 +34,8 @@ class WC_Dynamic_Metal_Pricing
 	const ORDER_META_FINAL_PRICE     = '_order_final_price';
 	const ORDER_META_GOLD_PURITY     = '_order_gold_purity';
 
+	const CART_META_NPR_PRICE = 'ht_snapshot_npr_price';
+
 	/**
 	 * @var Metal_Rate_Store
 	 */
@@ -179,7 +181,7 @@ class WC_Dynamic_Metal_Pricing
 	 */
 	public function restore_cart_item_snapshot($cart_item, $values)
 	{
-		foreach (array(self::CART_META_VERSION, self::CART_META_CALCULATED_PRICE, self::CART_META_BREAKDOWN) as $key) {
+		foreach (array(self::CART_META_VERSION, self::CART_META_CALCULATED_PRICE, self::CART_META_NPR_PRICE, self::CART_META_BREAKDOWN) as $key) {
 			if (isset($values[ $key ])) {
 				$cart_item[ $key ] = $values[ $key ];
 			}
@@ -244,6 +246,7 @@ class WC_Dynamic_Metal_Pricing
 		return array(
 			self::CART_META_VERSION          => (int) $breakdown['rate_version'],
 			self::CART_META_CALCULATED_PRICE => (float) $breakdown['final_price'],
+			self::CART_META_NPR_PRICE        => (float) $breakdown['final_price'],
 			self::CART_META_BREAKDOWN        => wp_json_encode(
 				array(
 					'gold_cost'            => $breakdown['gold_cost'],
@@ -360,13 +363,29 @@ class WC_Dynamic_Metal_Pricing
 		$item->add_meta_data(self::ORDER_META_RHODIUM_PLATING, (float) $breakdown['rhodium_plating_cost_calc'], true);
 		$item->add_meta_data(self::ORDER_META_MISC_COST, (float) $breakdown['misc_cost_calc'], true);
 		$item->add_meta_data(self::ORDER_META_FINAL_PRICE, (float) $breakdown['final_price'], true);
+		$item->add_meta_data(WC_Currency_Integration::ORDER_META_NPR_FINAL_PRICE, (float) $breakdown['final_price'], true);
 
 		if (!empty($breakdown['gold_purity'])) {
 			$item->add_meta_data(self::ORDER_META_GOLD_PURITY, $breakdown['gold_purity'], true);
 		}
 
-		$qty        = max(1, (int) $item->get_quantity());
-		$line_total = (float) $breakdown['final_price'] * $qty;
+		$qty      = max(1, (int) $item->get_quantity());
+		$npr_unit = (float) $breakdown['final_price'];
+		$currency = isset($values[ WC_Currency_Integration::CART_META_DISPLAY_CURRENCY ])
+			? (string) $values[ WC_Currency_Integration::CART_META_DISPLAY_CURRENCY ]
+			: Currency_Context::instance()->get_display_currency();
+
+		if (Currency_Context::CURRENCY_USD === $currency) {
+			$converter    = new Currency_Converter($this->rate_store);
+			$display_unit = $converter->convert_for_display($npr_unit, Currency_Context::CURRENCY_USD);
+			$item->add_meta_data(WC_Currency_Integration::ORDER_META_DISPLAY_CURRENCY, Currency_Context::CURRENCY_USD, true);
+			$item->add_meta_data(WC_Currency_Integration::ORDER_META_FX_RATE, $converter->get_npr_per_usd(), true);
+		} else {
+			$display_unit = ( new Currency_Converter($this->rate_store) )->round_npr($npr_unit);
+			$item->add_meta_data(WC_Currency_Integration::ORDER_META_DISPLAY_CURRENCY, Currency_Context::CURRENCY_NPR, true);
+		}
+
+		$line_total = $display_unit * $qty;
 
 		$item->set_subtotal($line_total);
 		$item->set_total($line_total);
@@ -517,6 +536,11 @@ class WC_Dynamic_Metal_Pricing
 					<p class="ht-metal-pricing-breakdown__disclaimer description">
 						<?php esc_html_e('Prices are based on live material rates and may update during checkout.', 'octoways'); ?>
 					</p>
+					<?php if (Currency_Context::instance()->is_usd()) : ?>
+						<p class="ht-metal-pricing-breakdown__disclaimer description">
+							<?php esc_html_e('Material rates and component costs are shown in NPR. The estimated total is converted at the current exchange rate.', 'octoways'); ?>
+						</p>
+					<?php endif; ?>
 					<?php if ($guide_url) : ?>
 						<a class="ht-metal-pricing-modal__link" href="<?php echo esc_url($guide_url); ?>">
 							<?php esc_html_e('Learn more about our pricing', 'octoways'); ?>
@@ -582,77 +606,85 @@ class WC_Dynamic_Metal_Pricing
 	 */
 	private function render_breakdown_list(array $breakdown, $making_label)
 	{
+		$converter   = new Currency_Converter($this->rate_store);
+		$format_npr  = static function ($amount) use ($converter) {
+			return $converter->format_npr($amount);
+		};
+		$is_usd      = Currency_Context::instance()->is_usd();
+		$final_price = $is_usd
+			? $converter->convert_for_display((float) $breakdown['final_price'])
+			: (float) $breakdown['final_price'];
 		?>
 		<ul class="ht-metal-pricing-breakdown__list">
 			<?php if ($breakdown['gold_weight'] > 0) : ?>
 				<li>
 					<span><?php esc_html_e('Gold (24K base rate / g)', 'octoways'); ?></span>
-					<strong><?php echo wp_kses_post(wc_price($breakdown['gold_rate_24k'])); ?></strong>
+					<strong><?php echo wp_kses_post($format_npr($breakdown['gold_rate_24k'])); ?></strong>
 				</li>
 				<li>
 					<span><?php printf(/* translators: %s: purity */ esc_html__('Gold %s effective rate / g', 'octoways'), esc_html($breakdown['gold_purity'])); ?></span>
-					<strong><?php echo wp_kses_post(wc_price($breakdown['gold_effective_rate'])); ?></strong>
+					<strong><?php echo wp_kses_post($format_npr($breakdown['gold_effective_rate'])); ?></strong>
 				</li>
 				<li>
 					<span><?php printf(/* translators: %s: weight */ esc_html__('Gold weight (%sg)', 'octoways'), esc_html((string) $breakdown['gold_weight'])); ?></span>
-					<strong><?php echo wp_kses_post(wc_price($breakdown['gold_cost'])); ?></strong>
+					<strong><?php echo wp_kses_post($format_npr($breakdown['gold_cost'])); ?></strong>
 				</li>
 			<?php endif; ?>
 
 			<?php if ($breakdown['silver_weight'] > 0) : ?>
 				<li>
 					<span><?php esc_html_e('Silver rate / g', 'octoways'); ?></span>
-					<strong><?php echo wp_kses_post(wc_price($breakdown['silver_rate'])); ?></strong>
+					<strong><?php echo wp_kses_post($format_npr($breakdown['silver_rate'])); ?></strong>
 				</li>
 				<li>
 					<span><?php printf(/* translators: %s: weight */ esc_html__('Silver (%sg)', 'octoways'), esc_html((string) $breakdown['silver_weight'])); ?></span>
-					<strong><?php echo wp_kses_post(wc_price($breakdown['silver_cost'])); ?></strong>
+					<strong><?php echo wp_kses_post($format_npr($breakdown['silver_cost'])); ?></strong>
 				</li>
 			<?php endif; ?>
 
 			<?php if ($breakdown['diamond_weight'] > 0) : ?>
 				<li>
 					<span><?php esc_html_e('Diamond rate / ct', 'octoways'); ?></span>
-					<strong><?php echo wp_kses_post(wc_price($breakdown['diamond_rate'])); ?></strong>
+					<strong><?php echo wp_kses_post($format_npr($breakdown['diamond_rate'])); ?></strong>
 				</li>
 				<li>
 					<span><?php printf(/* translators: %s: carats */ esc_html__('Diamond (%s ct)', 'octoways'), esc_html((string) $breakdown['diamond_weight'])); ?></span>
-					<strong><?php echo wp_kses_post(wc_price($breakdown['diamond_cost'])); ?></strong>
+					<strong><?php echo wp_kses_post($format_npr($breakdown['diamond_cost'])); ?></strong>
 				</li>
 			<?php endif; ?>
 
 			<?php if ($breakdown['gemstone_cost'] > 0) : ?>
 				<li>
 					<span><?php printf(/* translators: 1: qty 2: rate */ esc_html__('Gemstone (%1$s × %2$s)', 'octoways'), esc_html((string) $breakdown['gemstone_qty']), esc_html(number_format($breakdown['gemstone_rate'], 2))); ?></span>
-					<strong><?php echo wp_kses_post(wc_price($breakdown['gemstone_cost'])); ?></strong>
+					<strong><?php echo wp_kses_post($format_npr($breakdown['gemstone_cost'])); ?></strong>
 				</li>
 			<?php endif; ?>
 
 			<?php if ($breakdown['gold_plating_cost_calc'] > 0) : ?>
 				<li>
 					<span><?php esc_html_e('Gold plating', 'octoways'); ?></span>
-					<strong><?php echo wp_kses_post(wc_price($breakdown['gold_plating_cost_calc'])); ?></strong>
+					<strong><?php echo wp_kses_post($format_npr($breakdown['gold_plating_cost_calc'])); ?></strong>
 				</li>
 			<?php endif; ?>
 
 			<?php if ($breakdown['rhodium_plating_cost_calc'] > 0) : ?>
 				<li>
 					<span><?php esc_html_e('Rhodium plating', 'octoways'); ?></span>
-					<strong><?php echo wp_kses_post(wc_price($breakdown['rhodium_plating_cost_calc'])); ?></strong>
+					<strong><?php echo wp_kses_post($format_npr($breakdown['rhodium_plating_cost_calc'])); ?></strong>
 				</li>
 			<?php endif; ?>
 
 			<?php if ($breakdown['misc_cost_calc'] > 0) : ?>
 				<li>
 					<span><?php esc_html_e('Miscellaneous', 'octoways'); ?></span>
-					<strong><?php echo wp_kses_post(wc_price($breakdown['misc_cost_calc'])); ?></strong>
+					<strong><?php echo wp_kses_post($format_npr($breakdown['misc_cost_calc'])); ?></strong>
 				</li>
 			<?php endif; ?>
 
 			<?php if (Metal_Price_Calculator::CHARGE_PERCENTAGE === $breakdown['making_charge_type'] && $breakdown['metal_value'] > 0) : ?>
 				<li>
 					<span><?php esc_html_e('Metal value (gold + silver)', 'octoways'); ?></span>
-					<strong><?php echo wp_kses_post(wc_price($breakdown['metal_value'])); ?></strong>
+					<strong><?php echo wp_kses_post($format_npr($breakdown['metal_value'])); ?></strong>
 				</li>
 			<?php endif; ?>
 
@@ -670,18 +702,18 @@ class WC_Dynamic_Metal_Pricing
 					if (Metal_Price_Calculator::CHARGE_PERCENTAGE === $breakdown['making_charge_type']) {
 						echo esc_html($breakdown['making_charge_value'] . '%');
 					} else {
-						echo wp_kses_post(wc_price($breakdown['making_charge_value'] ?: $this->rate_store->get_rates()['default_making_charge']));
+						echo wp_kses_post($format_npr($breakdown['making_charge_value'] ?: $this->rate_store->get_rates()['default_making_charge']));
 					}
 					?>
 				</strong>
 			</li>
 			<li>
 				<span><?php esc_html_e('Making charge total', 'octoways'); ?></span>
-				<strong><?php echo wp_kses_post(wc_price($breakdown['making_charge'])); ?></strong>
+				<strong><?php echo wp_kses_post($format_npr($breakdown['making_charge'])); ?></strong>
 			</li>
 			<li class="ht-metal-pricing-breakdown__total">
 				<span><?php esc_html_e('Estimated total', 'octoways'); ?></span>
-				<strong><?php echo wp_kses_post(wc_price($breakdown['final_price'])); ?></strong>
+				<strong><?php echo wp_kses_post($converter->format_amount($final_price)); ?></strong>
 			</li>
 		</ul>
 		<?php
@@ -715,7 +747,10 @@ class WC_Dynamic_Metal_Pricing
 			return;
 		}
 
-		$final = $item->get_meta(self::ORDER_META_FINAL_PRICE, true);
+		$final     = $item->get_meta(self::ORDER_META_FINAL_PRICE, true);
+		$npr_final = $item->get_meta(WC_Currency_Integration::ORDER_META_NPR_FINAL_PRICE, true);
+		$currency  = $item->get_meta(WC_Currency_Integration::ORDER_META_DISPLAY_CURRENCY, true);
+		$fx_rate   = $item->get_meta(WC_Currency_Integration::ORDER_META_FX_RATE, true);
 
 		if ('' === $final || null === $final) {
 			return;
@@ -730,7 +765,21 @@ class WC_Dynamic_Metal_Pricing
 			echo ' (' . esc_html($purity) . ')';
 		}
 		echo ': ';
-		echo wp_kses_post(wc_price((float) $final));
+
+		if (Currency_Context::CURRENCY_USD === $currency && '' !== $npr_final && null !== $npr_final) {
+			$paid_unit = (float) $item->get_total() / max(1, (int) $item->get_quantity());
+			echo wp_kses_post(wc_price($paid_unit, array('currency' => 'USD')));
+			echo ' ';
+			echo esc_html__('(NPR reference:', 'octoways') . ' ';
+			echo wp_kses_post(wc_price((float) $npr_final, array('currency' => 'NPR')));
+			if ($fx_rate) {
+				printf(', %s %s', esc_html__('rate', 'octoways'), esc_html((string) $fx_rate));
+			}
+			echo ')';
+		} else {
+			echo wp_kses_post(wc_price((float) $final, array('currency' => 'NPR')));
+		}
+
 		echo ' ';
 		printf('(%s %s)', esc_html__('rate v', 'octoways'), esc_html((string) $version));
 		echo '</small></div>';

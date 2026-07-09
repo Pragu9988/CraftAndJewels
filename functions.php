@@ -157,6 +157,10 @@ if (!class_exists('OCTOWAYS_PORTFOLIO_THEME')) {
 					'class-metal-rate-store.php',
 					'class-metal-price-calculator.php',
 					'class-metal-rate-sync.php',
+					'class-currency-context.php',
+					'class-currency-converter.php',
+					'class-currency-fx-sync.php',
+					'class-wc-currency-integration.php',
 					'class-wc-dynamic-metal-pricing.php',
 					'class-metal-pricing-admin.php',
 				);
@@ -174,11 +178,21 @@ if (!class_exists('OCTOWAYS_PORTFOLIO_THEME')) {
 					$rate_sync   = new \OCTOWAYS_THEME\Inc\Metal_Rate_Sync($rate_store);
 					$rate_sync->register();
 
+					$fx_sync = new \OCTOWAYS_THEME\Inc\Currency_FX_Sync($rate_store);
+					$fx_sync->register();
+
+					$currency_context = \OCTOWAYS_THEME\Inc\Currency_Context::instance();
+					$currency_context->register();
+
+					$currency_converter = new \OCTOWAYS_THEME\Inc\Currency_Converter($rate_store, $currency_context);
+					$currency_integration = new \OCTOWAYS_THEME\Inc\WC_Currency_Integration($currency_context, $currency_converter, $rate_store);
+					$currency_integration->register();
+
 					$metal_pricing = new \OCTOWAYS_THEME\Inc\WC_Dynamic_Metal_Pricing($rate_store, $calculator);
 					$metal_pricing->register();
 
 					if (is_admin()) {
-						$metal_admin = new \OCTOWAYS_THEME\Inc\Metal_Pricing_Admin($rate_store, $rate_sync, $calculator);
+						$metal_admin = new \OCTOWAYS_THEME\Inc\Metal_Pricing_Admin($rate_store, $rate_sync, $calculator, $fx_sync);
 						$metal_admin->register();
 					}
 				}

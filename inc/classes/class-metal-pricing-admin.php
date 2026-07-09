@@ -25,6 +25,11 @@ class Metal_Pricing_Admin
 	private $rate_sync;
 
 	/**
+	 * @var Currency_FX_Sync
+	 */
+	private $fx_sync;
+
+	/**
 	 * @var Metal_Price_Calculator
 	 */
 	private $calculator;
@@ -33,15 +38,18 @@ class Metal_Pricing_Admin
 	 * @param Metal_Rate_Store|null       $rate_store Rate store.
 	 * @param Metal_Rate_Sync|null        $rate_sync  Sync service.
 	 * @param Metal_Price_Calculator|null $calculator Calculator.
+	 * @param Currency_FX_Sync|null       $fx_sync    FX sync service.
 	 */
 	public function __construct(
 		Metal_Rate_Store $rate_store = null,
 		Metal_Rate_Sync $rate_sync = null,
-		Metal_Price_Calculator $calculator = null
+		Metal_Price_Calculator $calculator = null,
+		Currency_FX_Sync $fx_sync = null
 	) {
 		$this->rate_store  = $rate_store ?: new Metal_Rate_Store();
 		$this->rate_sync   = $rate_sync ?: new Metal_Rate_Sync($this->rate_store);
 		$this->calculator  = $calculator ?: new Metal_Price_Calculator($this->rate_store);
+		$this->fx_sync     = $fx_sync ?: new Currency_FX_Sync($this->rate_store);
 	}
 
 	/**
@@ -53,6 +61,8 @@ class Metal_Pricing_Admin
 		add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
 		add_action('admin_post_ht_metal_rates_save', array($this, 'handle_manual_save'));
 		add_action('admin_post_ht_metal_rates_sync', array($this, 'handle_manual_sync'));
+		add_action('admin_post_ht_fx_rates_save', array($this, 'handle_fx_manual_save'));
+		add_action('admin_post_ht_fx_rates_sync', array($this, 'handle_fx_manual_sync'));
 
 		add_action('woocommerce_product_options_general_product_data', array($this, 'render_product_fields'));
 		add_action('woocommerce_process_product_meta', array($this, 'save_product_fields'), 10, 1);
@@ -276,6 +286,12 @@ class Metal_Pricing_Admin
 
 		$rates = $this->rate_store->get_rates();
 		$api_sync_enabled = !empty($rates['api_sync_enabled']);
+		$fx_api_sync_enabled = !empty($rates['fx_api_sync_enabled']);
+		$npr_per_usd = (float) $rates['npr_per_usd'];
+		$example_npr = 11531.17;
+		$fx_converter = new Currency_Converter($this->rate_store);
+		$example_npr_display = $fx_converter->round_npr($example_npr);
+		$example_usd = $npr_per_usd > 0 ? $fx_converter->npr_to_usd($example_npr) : 0;
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e('Dynamic Pricing — Material Rates', 'octoways'); ?></h1>
@@ -301,6 +317,24 @@ class Metal_Pricing_Admin
 			<?php if (isset($_GET['sync_disabled'])) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
 				<div class="notice notice-warning is-dismissible">
 					<p><?php esc_html_e('API sync is disabled while manual pricing mode is active. Enable automatic API sync to fetch live rates.', 'octoways'); ?></p>
+				</div>
+			<?php endif; ?>
+
+			<?php if (isset($_GET['fx_synced'])) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
+				<div class="notice notice-success is-dismissible">
+					<p><?php esc_html_e('NPR/USD exchange rate synced from API.', 'octoways'); ?></p>
+				</div>
+			<?php endif; ?>
+
+			<?php if (isset($_GET['fx_sync_failed'])) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
+				<div class="notice notice-error is-dismissible">
+					<p><?php esc_html_e('FX API sync failed. Previous exchange rate was retained.', 'octoways'); ?></p>
+				</div>
+			<?php endif; ?>
+
+			<?php if (isset($_GET['fx_sync_disabled'])) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
+				<div class="notice notice-warning is-dismissible">
+					<p><?php esc_html_e('FX API sync is disabled while manual FX mode is active.', 'octoways'); ?></p>
 				</div>
 			<?php endif; ?>
 
@@ -425,6 +459,98 @@ class Metal_Pricing_Admin
 					<?php esc_html_e('Automatic API sync is off. Save manual rates above or enable API sync to resume live market updates.', 'octoways'); ?>
 				<?php endif; ?>
 			</p>
+
+			<hr />
+
+			<h2><?php esc_html_e('Currency conversion (NPR → USD)', 'octoways'); ?></h2>
+			<p class="description">
+				<?php esc_html_e('Product prices are calculated in NPR. The storefront switcher converts displayed and checkout totals to USD using the rate below.', 'octoways'); ?>
+			</p>
+
+			<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+				<?php wp_nonce_field('ht_fx_rates_save', 'ht_fx_rates_nonce'); ?>
+				<input type="hidden" name="action" value="ht_fx_rates_save" />
+
+				<table class="form-table" role="presentation">
+					<tr>
+						<th scope="row"><?php esc_html_e('FX mode', 'octoways'); ?></th>
+						<td>
+							<label for="ht_fx_api_sync_enabled">
+								<input type="checkbox" id="ht_fx_api_sync_enabled" name="ht_fx_api_sync_enabled" value="1" <?php checked($fx_api_sync_enabled); ?> />
+								<?php esc_html_e('Enable automatic FX API sync (USD/NPR)', 'octoways'); ?>
+							</label>
+							<p class="description">
+								<?php if ($fx_api_sync_enabled) : ?>
+									<?php esc_html_e('Exchange rate updates every 6 hours from ExchangeRate-API (or Frankfurter fallback). Manual value may be overwritten on sync.', 'octoways'); ?>
+								<?php else : ?>
+									<?php esc_html_e('Manual FX mode — the NPR per USD value below is used until API sync is enabled.', 'octoways'); ?>
+								<?php endif; ?>
+								<?php if (!defined('HT_FX_API_KEY')) : ?>
+									<br /><?php esc_html_e('Optional: define HT_FX_API_KEY in wp-config.php for ExchangeRate-API. Without it, Frankfurter is used as fallback.', 'octoways'); ?>
+								<?php endif; ?>
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="ht_npr_per_usd"><?php esc_html_e('NPR per 1 USD', 'octoways'); ?></label>
+						</th>
+						<td>
+							<input type="number" step="0.01" min="0" class="regular-text" id="ht_npr_per_usd" name="ht_npr_per_usd"
+								value="<?php echo esc_attr($rates['npr_per_usd']); ?>" />
+							<p class="description">
+								<?php
+								if ($npr_per_usd > 0) {
+									printf(
+										/* translators: 1: NPR example 2: USD example 3: rate */
+										esc_html__('Example: Rs. %1$s → $%2$s @ %3$s NPR/USD', 'octoways'),
+										esc_html(number_format($example_npr_display, 0)),
+										esc_html(number_format($example_usd, 0)),
+										esc_html(number_format($npr_per_usd, 2))
+									);
+								} else {
+									esc_html_e('Set a rate to enable USD checkout.', 'octoways');
+								}
+								?>
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e('FX rate version', 'octoways'); ?></th>
+						<td><code><?php echo esc_html((string) $rates['fx_rate_version']); ?></code></td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e('FX last synced', 'octoways'); ?></th>
+						<td>
+							<?php
+							echo $rates['fx_last_synced_at']
+								? esc_html($rates['fx_last_synced_at'] . ' UTC')
+								: esc_html__('Never', 'octoways');
+							?>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e('FX source', 'octoways'); ?></th>
+						<td><code><?php echo esc_html((string) $rates['fx_rate_source']); ?></code></td>
+					</tr>
+				</table>
+
+				<?php submit_button(__('Save FX settings', 'octoways')); ?>
+			</form>
+
+			<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+				<?php wp_nonce_field('ht_fx_rates_sync', 'ht_fx_rates_sync_nonce'); ?>
+				<input type="hidden" name="action" value="ht_fx_rates_sync" />
+				<?php
+				submit_button(
+					__('Sync FX rate from API now', 'octoways'),
+					'secondary',
+					'submit',
+					true,
+					$fx_api_sync_enabled ? array() : array('disabled' => 'disabled')
+				);
+				?>
+			</form>
 				</div>
 
 				<?php $this->render_pricing_formula_block($rates); ?>
@@ -463,6 +589,80 @@ class Metal_Pricing_Admin
 		);
 
 		wp_safe_redirect(add_query_arg('updated', '1', admin_url('admin.php?page=ht-metal-rates')));
+		exit;
+	}
+
+	/**
+	 * Save manual FX settings.
+	 */
+	public function handle_fx_manual_save()
+	{
+		if (!current_user_can('manage_woocommerce')) {
+			wp_die(esc_html__('Unauthorized', 'octoways'));
+		}
+
+		check_admin_referer('ht_fx_rates_save', 'ht_fx_rates_nonce');
+
+		$current     = $this->rate_store->get_rates();
+		$npr_per_usd = isset($_POST['ht_npr_per_usd']) ? (float) wp_unslash($_POST['ht_npr_per_usd']) : (float) $current['npr_per_usd']; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$fx_api      = !empty($_POST['ht_fx_api_sync_enabled']); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$npr_changed = abs($npr_per_usd - (float) $current['npr_per_usd']) > 0.0001;
+
+		$this->rate_store->update_rates(
+			array(
+				'fx_api_sync_enabled' => $fx_api,
+			),
+			$current['rate_source'],
+			false
+		);
+
+		if ($npr_changed) {
+			$this->rate_store->update_fx_rates($npr_per_usd, Metal_Rate_Store::FX_SOURCE_MANUAL, true);
+		} elseif ($npr_per_usd !== (float) $current['npr_per_usd']) {
+			$this->rate_store->update_rates(
+				array(
+					'npr_per_usd'       => $npr_per_usd,
+					'fx_rate_source'    => Metal_Rate_Store::FX_SOURCE_MANUAL,
+					'fx_last_synced_at' => gmdate('Y-m-d H:i:s'),
+				),
+				$current['rate_source'],
+				false
+			);
+		}
+
+		Metal_Rate_Store::log(
+			'fx_manual_update',
+			'FX settings updated manually from admin.',
+			array(
+				'npr_per_usd'         => $npr_per_usd,
+				'fx_api_sync_enabled' => $fx_api,
+			)
+		);
+
+		wp_safe_redirect(add_query_arg('updated', '1', admin_url('admin.php?page=ht-metal-rates')));
+		exit;
+	}
+
+	/**
+	 * Trigger manual FX API sync.
+	 */
+	public function handle_fx_manual_sync()
+	{
+		if (!current_user_can('manage_woocommerce')) {
+			wp_die(esc_html__('Unauthorized', 'octoways'));
+		}
+
+		check_admin_referer('ht_fx_rates_sync', 'ht_fx_rates_sync_nonce');
+
+		if (!$this->rate_store->is_fx_api_sync_enabled()) {
+			wp_safe_redirect(add_query_arg('fx_sync_disabled', '1', admin_url('admin.php?page=ht-metal-rates')));
+			exit;
+		}
+
+		$success = $this->fx_sync->run_sync(true);
+		$arg     = $success ? 'fx_synced' : 'fx_sync_failed';
+
+		wp_safe_redirect(add_query_arg($arg, '1', admin_url('admin.php?page=ht-metal-rates')));
 		exit;
 	}
 
@@ -529,6 +729,8 @@ class Metal_Pricing_Admin
 			.ht-metal-pricing-preview__head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 			.ht-metal-pricing-preview__label { font-weight: 600; color: #1d2327; }
 			.ht-metal-pricing-preview__total { font-size: 16px; font-weight: 700; font-family: ui-monospace, monospace; color: #135e96; margin-left: auto; }
+			.ht-metal-pricing-preview__totals { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; margin-left: auto; }
+			.ht-metal-pricing-preview__total-usd { font-size: 14px; font-weight: 600; font-family: ui-monospace, monospace; color: #50575e; }
 			.ht-metal-pricing-preview.is-empty .ht-metal-pricing-preview__total { color: #646970; font-weight: 500; font-size: 13px; }
 			.ht-metal-pricing-preview__info-wrap { position: relative; display: inline-flex; }
 			.ht-metal-pricing-preview__info { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; padding: 0; border: 0; background: transparent; color: #2271b1; cursor: pointer; border-radius: 50%; }
@@ -605,7 +807,7 @@ class Metal_Pricing_Admin
 					}
 				}
 
-				function renderPreviewTooltip(lines, totalFormatted) {
+				function renderPreviewTooltip(lines, totalFormatted, totalUsdFormatted) {
 					if (!lines || !lines.length) {
 						return '<p class=\"ht-metal-pricing-preview__note\">' + htMetalPricingAdmin.i18n.empty + '</p>';
 					}
@@ -614,8 +816,19 @@ class Metal_Pricing_Admin
 					lines.forEach(function (line) {
 						html += '<tr><th>' + line.label + '</th><td class=\"ht-metal-pricing-preview__tooltip-formula\">' + line.formula + '</td><td class=\"ht-metal-pricing-preview__tooltip-amount\">' + line.amount + '</td></tr>';
 					});
-					html += '<tr><th>" . esc_js(__('Total', 'octoways')) . "</th><td></td><td class=\"ht-metal-pricing-preview__tooltip-amount\">' + totalFormatted + '</td></tr>';
+					html += '<tr><th>" . esc_js(__('Total (NPR)', 'octoways')) . "</th><td></td><td class=\"ht-metal-pricing-preview__tooltip-amount\">' + totalFormatted + '</td></tr>';
+					if (totalUsdFormatted) {
+						html += '<tr><th>" . esc_js(__('Total (USD)', 'octoways')) . "</th><td></td><td class=\"ht-metal-pricing-preview__tooltip-amount\">' + totalUsdFormatted + '</td></tr>';
+					}
 					html += '</tbody></table><p class=\"ht-metal-pricing-preview__note\">' + htMetalPricingAdmin.i18n.rateNote + '</p>';
+					return html;
+				}
+
+				function renderPreviewTotals(payload) {
+					var html = '<span class=\"ht-metal-pricing-preview__total\">' + (payload.total_formatted || htMetalPricingAdmin.i18n.empty) + '</span>';
+					if (payload.total_usd_formatted) {
+						html += '<span class=\"ht-metal-pricing-preview__total-usd\">' + payload.total_usd_formatted + '</span>';
+					}
 					return html;
 				}
 
@@ -627,7 +840,7 @@ class Metal_Pricing_Admin
 
 					if (!data || !data.success) {
 						\$panel.addClass('is-empty');
-						\$panel.find('.ht-metal-pricing-preview__total').text(htMetalPricingAdmin.i18n.empty);
+						\$panel.find('.ht-metal-pricing-preview__totals, .ht-metal-pricing-preview__total').text(htMetalPricingAdmin.i18n.empty);
 						\$panel.find('.ht-metal-pricing-preview__tooltip').html('<p class=\"ht-metal-pricing-preview__note\">' + htMetalPricingAdmin.i18n.empty + '</p>');
 						\$panel.find('.ht-metal-pricing-preview__info-wrap').hide();
 						return;
@@ -635,8 +848,12 @@ class Metal_Pricing_Admin
 
 					var payload = data.data;
 					\$panel.toggleClass('is-empty', !payload.lines || !payload.lines.length);
-					\$panel.find('.ht-metal-pricing-preview__total').text(payload.total_formatted || htMetalPricingAdmin.i18n.empty);
-					\$panel.find('.ht-metal-pricing-preview__tooltip').html(renderPreviewTooltip(payload.lines, payload.total_formatted));
+					if (\$panel.find('.ht-metal-pricing-preview__totals').length) {
+						\$panel.find('.ht-metal-pricing-preview__totals').html(renderPreviewTotals(payload));
+					} else {
+						\$panel.find('.ht-metal-pricing-preview__total').text(payload.total_formatted || htMetalPricingAdmin.i18n.empty);
+					}
+					\$panel.find('.ht-metal-pricing-preview__tooltip').html(renderPreviewTooltip(payload.lines, payload.total_formatted, payload.total_usd_formatted));
 					\$panel.find('.ht-metal-pricing-preview__info-wrap').toggle(!!(payload.lines && payload.lines.length));
 				}
 
@@ -646,7 +863,11 @@ class Metal_Pricing_Admin
 					if (!\$root.length || !\$panel.length || typeof htMetalPricingAdmin === 'undefined') return;
 
 					\$panel.addClass('is-loading');
-					\$panel.find('.ht-metal-pricing-preview__total').text(htMetalPricingAdmin.i18n.loading);
+					if (\$panel.find('.ht-metal-pricing-preview__totals').length) {
+						\$panel.find('.ht-metal-pricing-preview__totals').html('<span class=\"ht-metal-pricing-preview__total\">' + htMetalPricingAdmin.i18n.loading + '</span>');
+					} else {
+						\$panel.find('.ht-metal-pricing-preview__total').text(htMetalPricingAdmin.i18n.loading);
+					}
 
 					$.post(htMetalPricingAdmin.ajaxUrl, \$root.find(':input').serialize() + '&action=ht_preview_metal_price&nonce=' + encodeURIComponent(htMetalPricingAdmin.nonce))
 						.done(function (response) { updatePreviewPanel(response); })
@@ -958,7 +1179,12 @@ class Metal_Pricing_Admin
 			echo '</span>';
 		}
 
-		echo '<strong class="ht-metal-pricing-preview__total">' . esc_html($payload['total_formatted']) . '</strong>';
+		echo '<div class="ht-metal-pricing-preview__totals">';
+		echo '<span class="ht-metal-pricing-preview__total">' . esc_html($payload['total_formatted']) . '</span>';
+		if (!empty($payload['total_usd_formatted'])) {
+			echo '<span class="ht-metal-pricing-preview__total-usd">' . esc_html($payload['total_usd_formatted']) . '</span>';
+		}
+		echo '</div>';
 		echo '</div>';
 		echo '<p class="ht-metal-pricing-preview__note">' . esc_html__('Based on current global material rates. Save the product to apply on the storefront.', 'octoways') . '</p>';
 		echo '</div>';
@@ -1026,13 +1252,18 @@ class Metal_Pricing_Admin
 	 */
 	private function build_preview_payload_from_breakdown(array $breakdown, array $rates)
 	{
-		$lines = $this->get_breakdown_display_lines($breakdown, $rates);
+		$lines     = $this->get_breakdown_display_lines($breakdown, $rates);
+		$converter = new Currency_Converter($this->rate_store);
+		$npr_total = $converter->round_npr((float) $breakdown['final_price']);
+		$usd_total = $converter->is_usd_available() ? $converter->npr_to_usd((float) $breakdown['final_price']) : 0;
 
 		return array(
-			'total'           => (float) $breakdown['final_price'],
-			'total_formatted' => $this->format_admin_currency($breakdown['final_price']),
-			'lines'           => $lines,
-			'rate_version'    => (int) $rates['rate_version'],
+			'total'               => $npr_total,
+			'total_formatted'     => $this->format_admin_currency($npr_total),
+			'total_usd'           => $usd_total,
+			'total_usd_formatted' => $usd_total > 0 ? $this->format_admin_usd_currency($usd_total) : '',
+			'lines'               => $lines,
+			'rate_version'        => (int) $rates['rate_version'],
 		);
 	}
 
@@ -1059,10 +1290,17 @@ class Metal_Pricing_Admin
 					</tr>
 				<?php endforeach; ?>
 				<tr>
-					<th><?php esc_html_e('Total', 'octoways'); ?></th>
+					<th><?php esc_html_e('Total (NPR)', 'octoways'); ?></th>
 					<td></td>
 					<td class="ht-metal-pricing-preview__tooltip-amount"><?php echo esc_html($payload['total_formatted']); ?></td>
 				</tr>
+				<?php if (!empty($payload['total_usd_formatted'])) : ?>
+				<tr>
+					<th><?php esc_html_e('Total (USD)', 'octoways'); ?></th>
+					<td></td>
+					<td class="ht-metal-pricing-preview__tooltip-amount"><?php echo esc_html($payload['total_usd_formatted']); ?></td>
+				</tr>
+				<?php endif; ?>
 			</tbody>
 		</table>
 		<p class="ht-metal-pricing-preview__note"><?php esc_html_e('Uses current global material rates.', 'octoways'); ?></p>
@@ -1212,7 +1450,16 @@ class Metal_Pricing_Admin
 	 */
 	private function format_admin_currency($amount)
 	{
-		return 'Rs. ' . number_format((float) $amount, 2);
+		return 'Rs. ' . number_format((float) $amount, 0);
+	}
+
+	/**
+	 * @param float $amount USD amount.
+	 * @return string
+	 */
+	private function format_admin_usd_currency($amount)
+	{
+		return '$' . number_format((float) $amount, 0);
 	}
 
 	/**
