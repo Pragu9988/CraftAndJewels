@@ -311,6 +311,13 @@ class WC_Currency_Integration
 				'error'
 			);
 		}
+
+		if ($this->is_npr_only_gateway($chosen)) {
+			wc_add_notice(
+				__('QR payment upload is available for NPR payments only. Please choose another payment method or switch to NPR.', 'octoways'),
+				'error'
+			);
+		}
 	}
 
 	/**
@@ -352,7 +359,7 @@ class WC_Currency_Integration
 			return $gateways;
 		}
 
-		foreach ($this->get_esewa_gateway_ids() as $gateway_id) {
+		foreach ($this->get_usd_disabled_gateway_ids() as $gateway_id) {
 			unset($gateways[ $gateway_id ]);
 		}
 
@@ -360,7 +367,7 @@ class WC_Currency_Integration
 	}
 
 	/**
-	 * Notice on USD checkout about eSewa restriction.
+	 * Notice on USD checkout about NPR-only payment methods.
 	 */
 	public function maybe_show_usd_checkout_notice()
 	{
@@ -369,7 +376,7 @@ class WC_Currency_Integration
 		}
 
 		wc_print_notice(
-			__('You are checking out in USD. eSewa is available for NPR payments only.', 'octoways'),
+			__('You are checking out in USD. eSewa and QR payment upload are available for NPR payments only.', 'octoways'),
 			'notice'
 		);
 	}
@@ -433,6 +440,28 @@ class WC_Currency_Integration
 	private function is_esewa_gateway($gateway_id)
 	{
 		return in_array($gateway_id, $this->get_esewa_gateway_ids(), true);
+	}
+
+	/**
+	 * @return string[]
+	 */
+	private function get_usd_disabled_gateway_ids()
+	{
+		$gateway_ids = array_merge(
+			$this->get_esewa_gateway_ids(),
+			array('ht_upload_proof')
+		);
+
+		return apply_filters('ht_usd_disabled_gateway_ids', $gateway_ids);
+	}
+
+	/**
+	 * @param string $gateway_id Gateway ID.
+	 * @return bool
+	 */
+	private function is_npr_only_gateway($gateway_id)
+	{
+		return in_array($gateway_id, array('ht_upload_proof'), true);
 	}
 
 	/**

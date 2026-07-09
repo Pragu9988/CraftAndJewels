@@ -11,19 +11,34 @@
 			return;
 		}
 
+		if (htCurrencySwitcher.currentCurrency) {
+			$select.val(htCurrencySwitcher.currentCurrency);
+		}
+
 		$select.on('change', function () {
-			var currency = $(this).val();
+			var $el = $(this);
+			var currency = $el.val();
+			var previous = htCurrencySwitcher.currentCurrency || 'NPR';
+
+			$el.prop('disabled', true);
 
 			$.post(htCurrencySwitcher.ajaxUrl, {
 				action: 'ht_set_display_currency',
 				nonce: htCurrencySwitcher.nonce,
 				currency: currency
 			})
-				.done(function () {
+				.done(function (response) {
+					if (!response || !response.success) {
+						$el.val(previous);
+						$el.prop('disabled', false);
+						return;
+					}
+
 					window.location.reload();
 				})
 				.fail(function () {
-					window.location.reload();
+					$el.val(previous);
+					$el.prop('disabled', false);
 				});
 		});
 	}
