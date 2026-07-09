@@ -17,9 +17,10 @@ class Currency_Context
 	const CURRENCY_NPR = 'NPR';
 	const CURRENCY_USD = 'USD';
 
-	const SESSION_KEY = 'ht_display_currency';
+	const SESSION_KEY = 'ht_shop_display_currency';
 	const COOKIE_NAME = 'ht_currency';
 	const COOKIE_TTL  = 30 * DAY_IN_SECONDS;
+	const NONCE_ACTION = 'ht_switch_currency';
 
 	/**
 	 * @var self|null
@@ -48,9 +49,50 @@ class Currency_Context
 	 */
 	public function register()
 	{
+		add_action('init', array($this, 'maybe_switch_currency_from_request'), 1);
 		add_action('woocommerce_init', array($this, 'bootstrap_from_cookie'), 5);
-		add_action('wp_ajax_ht_set_display_currency', array($this, 'ajax_set_currency'));
-		add_action('wp_ajax_nopriv_ht_set_display_currency', array($this, 'ajax_set_currency'));
+	}
+
+	/**
+	 * Handle ?ht_currency=NPR|USD via full-page redirect (reliable cookie persistence).
+	 */
+	public function maybe_switch_currency_from_request()
+	{
+		if (empty($_GET['ht_currency'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			return;
+		}
+
+		if (
+			empty($_GET['_wpnonce'])
+			|| !wp_verify_nonce(
+				sanitize_text_field(wp_unslash($_GET['_wpnonce'])), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				self::NONCE_ACTION
+			)
+		) {
+			return;
+		}
+
+		$currency = sanitize_text_field(wp_unslash($_GET['ht_currency'])); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+		if (self::CURRENCY_USD === $currency) {
+			$converter = new Currency_Converter();
+			if (!$converter->is_usd_available()) {
+				$currency = self::CURRENCY_NPR;
+			}
+		}
+
+		if ($this->is_valid_currency($currency)) {
+			$this->set_currency($currency);
+		}
+
+		$redirect = remove_query_arg(array('ht_currency', '_wpnonce'));
+
+		if (!$redirect) {
+			$redirect = home_url('/');
+		}
+
+		wp_safe_redirect($redirect);
+		exit;
 	}
 
 	/**
@@ -142,33 +184,11 @@ class Currency_Context
 	}
 
 	/**
-	 * AJAX: switch display currency.
+	 * @return string
 	 */
-	public function ajax_set_currency()
+	public static function get_switch_nonce()
 	{
-		check_ajax_referer('ht_set_display_currency', 'nonce');
-
-		if (!$this->ensure_woocommerce_session()) {
-			wp_send_json_error(
-				array('message' => __('Unable to start checkout session.', 'octoways')),
-				500
-			);
-		}
-
-		$currency = isset($_POST['currency']) ? sanitize_text_field(wp_unslash($_POST['currency'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
-
-		if (!$this->set_currency($currency)) {
-			wp_send_json_error(
-				array('message' => __('Invalid currency.', 'octoways')),
-				400
-			);
-		}
-
-		wp_send_json_success(
-			array(
-				'currency' => $currency,
-			)
-		);
+		return wp_create_nonce(self::NONCE_ACTION);
 	}
 
 	/**
@@ -229,7 +249,7 @@ class Currency_Context
 	}
 
 	/**
-	 * Persist session immediately (important for admin-ajax requests).
+	 * Persist session immediately.
 	 */
 	private function persist_session()
 	{
@@ -256,11 +276,14 @@ class Currency_Context
 			setcookie(
 				self::COOKIE_NAME,
 				$currency,
-				$expire,
-				defined('COOKIEPATH') && COOKIEPATH ? COOKIEPATH : '/',
-				defined('COOKIE_DOMAIN') ? COOKIE_DOMAIN : '',
-				$secure,
-				true
+				array(
+					'expires'  => $expire,
+					'path'     => defined('COOKIEPATH') && COOKIEPATH ? COOKIEPATH : '/',
+					'domain'   => defined('COOKIE_DOMAIN') ? COOKIE_DOMAIN : '',
+					'secure'   => $secure,
+					'httponly' => true,
+					'samesite' => 'Lax',
+				)
 			);
 		}
 

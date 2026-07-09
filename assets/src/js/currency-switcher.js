@@ -1,47 +1,33 @@
 /**
  * Header currency switcher (NPR / USD).
  */
-(function ($) {
+(function () {
 	'use strict';
 
 	function initCurrencySwitcher() {
-		var $select = $('[data-ht-currency-switcher]');
+		var select = document.querySelector('[data-ht-currency-switcher]');
 
-		if (!$select.length || typeof htCurrencySwitcher === 'undefined') {
+		if (!select || typeof htCurrencySwitcher === 'undefined') {
 			return;
 		}
 
 		if (htCurrencySwitcher.currentCurrency) {
-			$select.val(htCurrencySwitcher.currentCurrency);
+			select.value = htCurrencySwitcher.currentCurrency;
 		}
 
-		$select.on('change', function () {
-			var $el = $(this);
-			var currency = $el.val();
-			var previous = htCurrencySwitcher.currentCurrency || 'NPR';
+		select.addEventListener('change', function () {
+			var currency = select.value;
+			var url = new URL(window.location.href);
 
-			$el.prop('disabled', true);
-
-			$.post(htCurrencySwitcher.ajaxUrl, {
-				action: 'ht_set_display_currency',
-				nonce: htCurrencySwitcher.nonce,
-				currency: currency
-			})
-				.done(function (response) {
-					if (!response || !response.success) {
-						$el.val(previous);
-						$el.prop('disabled', false);
-						return;
-					}
-
-					window.location.reload();
-				})
-				.fail(function () {
-					$el.val(previous);
-					$el.prop('disabled', false);
-				});
+			url.searchParams.set('ht_currency', currency);
+			url.searchParams.set('_wpnonce', htCurrencySwitcher.nonce);
+			window.location.replace(url.toString());
 		});
 	}
 
-	$(initCurrencySwitcher);
-})(jQuery);
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', initCurrencySwitcher);
+	} else {
+		initCurrencySwitcher();
+	}
+})();

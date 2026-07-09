@@ -416,7 +416,7 @@ class WC_Currency_Integration
 		wp_enqueue_script(
 			'ht-currency-switcher',
 			$script_uri,
-			array('jquery'),
+			array(),
 			filemtime($script_path),
 			true
 		);
@@ -425,8 +425,7 @@ class WC_Currency_Integration
 			'ht-currency-switcher',
 			'htCurrencySwitcher',
 			array(
-				'ajaxUrl'          => admin_url('admin-ajax.php'),
-				'nonce'            => wp_create_nonce('ht_set_display_currency'),
+				'nonce'            => Currency_Context::get_switch_nonce(),
 				'currentCurrency'  => $this->context->get_display_currency(),
 				'usdAvailable'     => $this->converter->is_usd_available(),
 			)
